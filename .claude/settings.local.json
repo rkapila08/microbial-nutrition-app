@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx @biomejs/biome check --error-on-warnings)",
+      "Bash(npx @biomejs/biome check --write)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm format:*)",
+      "Bash(npx @biomejs/biome check --error-on-warnings src/app/quiz/quiz-client.tsx)",
+      "Bash(npx @biomejs/biome check --write src/app/quiz/quiz-client.tsx)",
+      "Bash(pnpm dev:*)",
+      "Bash(npx @biomejs/biome check --write .)",
+      "Bash(npx @biomejs/biome check --error-on-warnings src/app/page.tsx)"
+    ]
+  }
+}

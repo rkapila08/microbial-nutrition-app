@@ -1,0 +1,409 @@
+import Link from "next/link";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { GUT_PROFILES } from "~/lib/quiz-data";
+
+const steps = [
+  {
+    number: "01",
+    title: "Answer 32 questions",
+    description:
+      "About your diet patterns, digestion, energy levels, stress, and lifestyle. No lab work required.",
+  },
+  {
+    number: "02",
+    title: "Get your 4-letter type",
+    description:
+      "Across four axes: Microbiome Diversity, Inflammation Balance, Resilience, and Dietary Fiber intake.",
+  },
+  {
+    number: "03",
+    title: "Unlock your profile",
+    description:
+      "Receive a detailed breakdown of your gut type, what it means, and a personalised nutrition roadmap.",
+  },
+];
+
+const gutImpacts = [
+  {
+    icon: "🌿",
+    title: "Digestion & Nutrient Absorption",
+    body: "Your gut bacteria break down food your body can't digest on its own, synthesise essential vitamins like B12 and K2, and determine how much nutrition you actually absorb from every meal.",
+  },
+  {
+    icon: "🛡️",
+    title: "Immune Defence",
+    body: "Around 70% of your immune system lives in your gut. A balanced microbiome trains immune cells to distinguish friend from foe, reducing allergies, infections, and autoimmune flare-ups.",
+  },
+  {
+    icon: "🧠",
+    title: "Mental Health & Mood",
+    body: "The gut-brain axis is a two-way highway. Your gut produces over 90% of the body's serotonin and communicates directly with the brain via the vagus nerve, shaping mood, anxiety, and cognitive clarity.",
+  },
+  {
+    icon: "⚡",
+    title: "Energy & Metabolism",
+    body: "Gut microbes extract short-chain fatty acids from fibre that fuel your cells and regulate blood sugar. An imbalanced microbiome is linked to metabolic syndrome, weight gain, and persistent fatigue.",
+  },
+  {
+    icon: "🔥",
+    title: "Inflammation Control",
+    body: "Beneficial bacteria maintain the gut lining that keeps toxins out of the bloodstream. When the lining breaks down, low-grade systemic inflammation can contribute to conditions from skin flare-ups to heart disease.",
+  },
+  {
+    icon: "🌙",
+    title: "Sleep & Hormones",
+    body: "Gut microbes help produce melatonin precursors and regulate cortisol rhythms. Poor microbial diversity is associated with disrupted sleep cycles and hormonal imbalances that cascade through the entire body.",
+  },
+];
+
+function LeafSvg({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 7-8 7" />
+    </svg>
+  );
+}
+
+function FlowerSvg({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="16" cy="16" r="4" />
+      <ellipse cx="16" cy="6" rx="3" ry="5" />
+      <ellipse cx="16" cy="26" rx="3" ry="5" />
+      <ellipse cx="6" cy="16" rx="5" ry="3" />
+      <ellipse cx="26" cy="16" rx="5" ry="3" />
+      <ellipse cx="9" cy="9" rx="3" ry="5" transform="rotate(-45 9 9)" />
+      <ellipse cx="23" cy="9" rx="3" ry="5" transform="rotate(45 23 9)" />
+      <ellipse cx="9" cy="23" rx="3" ry="5" transform="rotate(45 9 23)" />
+      <ellipse cx="23" cy="23" rx="3" ry="5" transform="rotate(-45 23 23)" />
+    </svg>
+  );
+}
+
+export default function Home() {
+  return (
+    <main className="flex flex-col">
+      {/* Hero */}
+      <section className="hero-botanical relative flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center gap-6 overflow-hidden px-4 py-20 text-center">
+        <LeafSvg className="pointer-events-none absolute -left-10 top-16 h-56 w-56 rotate-[15deg] text-primary/10" />
+        <LeafSvg className="pointer-events-none absolute -right-8 bottom-20 h-44 w-44 -rotate-[20deg] text-accent/12" />
+        <FlowerSvg className="pointer-events-none absolute right-20 top-12 h-24 w-24 text-primary/8" />
+        <FlowerSvg className="pointer-events-none absolute left-28 bottom-28 h-16 w-16 text-accent/10" />
+        <FlowerSvg className="pointer-events-none absolute left-8 top-1/2 h-10 w-10 -translate-y-1/2 text-primary/6" />
+
+        <div className="relative flex flex-col items-center gap-6">
+          <Badge
+            variant="outline"
+            className="rounded-full px-4 py-1 text-xs font-semibold"
+          >
+            Free · 10 minutes · No account needed
+          </Badge>
+          <h1 className="max-w-2xl text-5xl font-black tracking-tight sm:text-6xl">
+            Discover Your Gut!
+          </h1>
+          <p className="max-w-lg text-lg text-muted-foreground">
+            Like Myers-Briggs — but for your gut. Answer 32 questions and get
+            matched to one of 16 microbiome profiles, each with a tailored
+            nutrition plan.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button asChild size="lg" className="rounded-2xl px-8 shadow-sm">
+              <Link href="/quiz">Take the quiz</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="rounded-2xl px-8"
+            >
+              <Link href="#profiles">See all 16 types</Link>
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Backed by research in nutritional microbiology · Not medical advice
+          </p>
+        </div>
+      </section>
+
+      {/* What is the gut microbiome */}
+      <section className="border-t border-border px-4 py-20">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 flex items-center justify-center gap-3 text-3xl font-black tracking-tight">
+              <LeafSvg className="h-7 w-7 text-primary" />
+              Why your gut microbiome matters
+            </h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
+              Your gut is home to roughly{" "}
+              <span className="font-semibold text-foreground">
+                38 trillion microbial cells
+              </span>{" "}
+              — more than the total number of human cells in your body. This
+              community of bacteria, fungi, and viruses, collectively known as
+              the gut microbiome, has a profound influence on almost every
+              system that keeps you healthy.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {gutImpacts.map((item) => (
+              <div
+                key={item.title}
+                className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm"
+              >
+                <span className="text-2xl" role="img" aria-label={item.title}>
+                  {item.icon}
+                </span>
+                <h3 className="font-bold leading-snug">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">
+                The bottom line:
+              </span>{" "}
+              gut health is not just about digestion. It is a master regulator
+              of immunity, mood, metabolism, and resilience. Understanding your
+              personal microbiome profile is one of the highest-leverage steps
+              you can take for whole-body health.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="border-t border-border bg-muted/40 px-4 py-20">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-12 flex items-center justify-center gap-3 text-center text-3xl font-black tracking-tight">
+            <LeafSvg className="h-7 w-7 text-primary" />
+            How it works
+            <LeafSvg className="h-7 w-7 scale-x-[-1] text-primary" />
+          </h2>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {steps.map((step) => (
+              <div key={step.number} className="flex flex-col gap-3">
+                <span className="font-mono text-4xl font-black text-primary/25">
+                  {step.number}
+                </span>
+                <h3 className="font-bold">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Two ways to know your gut */}
+      <section className="px-4 py-20">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-10 text-center">
+            <h2 className="mb-3 flex items-center justify-center gap-3 text-3xl font-black tracking-tight">
+              <LeafSvg className="h-7 w-7 text-primary" />
+              Two ways to know your gut
+            </h2>
+            <p className="text-muted-foreground">
+              Start with the quick quiz, go deeper with the 7-day journal.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {/* Snapshot quiz */}
+            <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-7 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted font-mono text-sm font-black text-muted-foreground">
+                  Q
+                </span>
+                <div>
+                  <h3 className="font-black">Snapshot Quiz</h3>
+                  <p className="text-xs text-muted-foreground">
+                    One-time · ~10 minutes
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Answer 32 questions about your current diet and digestion. Best
+                for getting a quick starting point or comparing to the journal.
+              </p>
+              <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                {[
+                  "32 questions, all in one sitting",
+                  "4-choice answers for accurate scoring",
+                  "Instant profile + nutrition plan",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <LeafSvg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Button asChild className="mt-auto rounded-xl">
+                <Link href="/quiz">Take the quiz</Link>
+              </Button>
+            </div>
+
+            {/* 7-day journal */}
+            <div className="flex flex-col gap-5 rounded-2xl border-2 border-primary/30 bg-primary/5 p-7 shadow-sm">
+              <div className="flex items-center gap-3">
+                <FlowerSvg className="h-10 w-10 text-primary" />
+                <div>
+                  <h3 className="font-black">7-Day Journal</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Longitudinal · 2 min/day
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Check in for 10 questions each day. Your profile is built from a
+                week of real data — significantly more accurate than any
+                snapshot.
+              </p>
+              <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                {[
+                  "10 questions per day over 7 days",
+                  "Tracks diet, stress, sleep, and gut comfort",
+                  "Day-by-day trends + final profile",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <LeafSvg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Button asChild className="mt-auto rounded-xl">
+                <Link href="/track">Start your journal</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* All 16 profiles */}
+      <section id="profiles" className="border-t border-border px-4 py-20">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-12 text-center">
+            <h2 className="mb-3 flex items-center justify-center gap-3 text-3xl font-black tracking-tight">
+              <FlowerSvg className="h-7 w-7 text-accent" />
+              All 16 profiles
+              <FlowerSvg className="h-7 w-7 text-accent" />
+            </h2>
+            <p className="text-muted-foreground">
+              Four axes, sixteen types. Take the quiz to find yours.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {GUT_PROFILES.map((profile) => (
+              <Card
+                key={profile.code}
+                className="flex flex-col rounded-2xl border-border/70 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <CardHeader className="pb-2">
+                  <span
+                    className={`inline-block self-start rounded-lg px-2 py-0.5 font-mono text-xs font-black ${profile.color}`}
+                  >
+                    {profile.code}
+                  </span>
+                  <CardTitle className="text-sm font-bold">
+                    {profile.name}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    {profile.tagline}
+                  </p>
+                </CardHeader>
+                <CardContent className="flex flex-1 flex-col justify-end pt-0">
+                  <p className="line-clamp-3 text-xs text-muted-foreground">
+                    {profile.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Button asChild className="rounded-2xl px-10 shadow-sm">
+              <Link href="/quiz">Find your type</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Four axes explainer */}
+      <section className="border-t border-border bg-muted/40 px-4 py-20">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-12 flex items-center justify-center gap-3 text-center text-3xl font-black tracking-tight">
+            <LeafSvg className="h-7 w-7 text-primary" />
+            The four axes
+          </h2>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {[
+              {
+                axis: "D vs S",
+                label: "Diversity",
+                desc: "How varied is your microbial community? Diverse microbiomes are linked to stronger immunity and mental health.",
+              },
+              {
+                axis: "B vs I",
+                label: "Inflammation",
+                desc: "Is your gut environment calm or inflamed? Chronic low-grade inflammation underlies many digestive conditions.",
+              },
+              {
+                axis: "R vs V",
+                label: "Resilience",
+                desc: "How quickly does your gut recover from disruption — antibiotics, travel, stress, or a bad meal?",
+              },
+              {
+                axis: "H vs L",
+                label: "Fiber intake",
+                desc: "Fiber is the primary fuel for beneficial bacteria. Your intake pattern shapes which strains thrive.",
+              },
+            ].map((item) => (
+              <div
+                key={item.axis}
+                className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-5 shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm font-black text-primary">
+                    {item.axis}
+                  </span>
+                  <span className="font-bold">{item.label}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer CTA */}
+      <section className="hero-botanical relative overflow-hidden border-t border-border px-4 py-20 text-center">
+        <LeafSvg className="pointer-events-none absolute -left-6 top-1/2 h-32 w-32 -translate-y-1/2 rotate-12 text-primary/10" />
+        <LeafSvg className="pointer-events-none absolute -right-4 bottom-4 h-24 w-24 -rotate-[30deg] text-accent/10" />
+        <div className="relative mx-auto flex max-w-lg flex-col items-center gap-4">
+          <h2 className="text-3xl font-black tracking-tight">
+            Ready to meet your microbiome?
+          </h2>
+          <p className="text-muted-foreground">
+            Takes 10 minutes. Completely free. No sign-up required.
+          </p>
+          <Button asChild size="lg" className="rounded-2xl px-10 shadow-sm">
+            <Link href="/quiz">Start the quiz</Link>
+          </Button>
+        </div>
+      </section>
+    </main>
+  );
+}
