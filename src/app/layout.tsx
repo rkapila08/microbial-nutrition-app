@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import { Instrument_Serif, Nunito } from "next/font/google";
 import { Navbar } from "~/components/navbar";
 import { ThemeProvider } from "./theme-provider";
 import "./globals.css";
 
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "MicroType — Discover Your Gut Microbiome Type",
@@ -19,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={nunito.className}>
+      <body className={`${nunito.className} ${instrumentSerif.variable}`}>
         <ThemeProvider>
           <Navbar />
           {children}

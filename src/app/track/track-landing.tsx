@@ -42,13 +42,17 @@ function FlowerSvg({ className }: { className?: string }) {
 export function TrackLanding() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleStart() {
     setLoading(true);
+    setError(null);
     try {
       const { code } = await createTrackerSession();
       router.push(`/track/${code}`);
-    } catch {
+    } catch (err) {
+      console.error("Failed to create tracker session:", err);
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
@@ -218,6 +222,7 @@ export function TrackLanding() {
           >
             {loading ? "Starting your journal…" : "Start your 7-day journal"}
           </Button>
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <p className="text-xs text-muted-foreground">
             You'll get a unique URL to bookmark and return to each day. No
             account required.

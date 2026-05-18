@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getTrackerSession } from "~/app/actions/tracker";
 import { TrackerClient } from "./tracker-client";
 
@@ -18,7 +18,7 @@ export default async function TrackerPage({ params }: Props) {
   const { code } = await params;
   const data = await getTrackerSession(code);
 
-  if (!data) notFound();
+  if (!data) redirect("/track");
 
   return (
     <main className="flex min-h-[calc(100vh-3.5rem)] flex-col">

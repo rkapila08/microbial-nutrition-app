@@ -1,8 +1,22 @@
 "use client";
 
+import confetti from "canvas-confetti";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  awardQuizGamification,
+  type GamificationResult,
+  getLeaderboard,
+  type LeaderboardEntry,
+} from "~/app/actions/gamification";
+import { BadgeDisplay } from "~/components/badge-display";
+import { BadgeEarnToast } from "~/components/badge-earn-toast";
+import { GutHealthScore } from "~/components/gut-health-score";
+import { Leaderboard } from "~/components/leaderboard";
+import { ProfileReveal } from "~/components/profile-reveal";
+import { ShareCard } from "~/components/share-card";
 import { Button } from "~/components/ui/button";
+import { calculateGutHealthScore } from "~/lib/gamification";
 import {
   AXIS_LABELS,
   type AxisChoice,
@@ -15,7 +29,7 @@ import {
 } from "~/lib/quiz-data";
 import { cn } from "~/lib/utils";
 
-type Phase = "intro" | "quiz" | "results";
+type Phase = "intro" | "quiz" | "reveal" | "results";
 
 const AXIS_ORDER: AxisKey[] = [
   "diversity",
@@ -31,9 +45,61 @@ export function QuizClient() {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, AxisChoice>>({});
   const [selectedChoice, setSelectedChoice] = useState<AxisChoice | null>(null);
+  const [isRetake, setIsRetake] = useState(false);
+  const [gamification, setGamification] = useState<GamificationResult | null>(
+    null,
+  );
+  const [gamificationLoading, setGamificationLoading] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(
+    null,
+  );
+  const gamificationFired = useRef(false);
+  const confettiFired = useRef(false);
 
   const question = QUIZ_QUESTIONS[current];
   const progress = Object.keys(answers).length / QUIZ_QUESTIONS.length;
+
+  useEffect(() => {
+    if (phase !== "results") return;
+
+    if (!confettiFired.current) {
+      confettiFired.current = true;
+      confetti({
+        particleCount: 140,
+        spread: 110,
+        origin: { y: 0.55 },
+        colors: ["#22d3ee", "#34d399", "#a78bfa", "#fb923c", "#f0abfc"],
+      });
+      setTimeout(() => {
+        confetti({
+          particleCount: 60,
+          angle: 60,
+          spread: 80,
+          origin: { x: 0, y: 0.6 },
+          colors: ["#22d3ee", "#34d399", "#a78bfa"],
+        });
+        confetti({
+          particleCount: 60,
+          angle: 120,
+          spread: 80,
+          origin: { x: 1, y: 0.6 },
+          colors: ["#fb923c", "#f0abfc", "#34d399"],
+        });
+      }, 250);
+    }
+
+    if (!gamificationFired.current) {
+      gamificationFired.current = true;
+      const code = calculateResult(answers);
+      const axisScores = getAxisScores(answers);
+      setGamificationLoading(true);
+      awardQuizGamification(axisScores, code, isRetake).then((result) => {
+        setGamification(result);
+        setGamificationLoading(false);
+      });
+      getLeaderboard().then(setLeaderboard);
+    }
+  }, [phase, answers, isRetake]);
 
   function handleAnswer(choice: AxisChoice) {
     if (selectedChoice !== null) return;
@@ -47,7 +113,7 @@ export function QuizClient() {
       if (current < QUIZ_QUESTIONS.length - 1) {
         setCurrent((c) => c + 1);
       } else {
-        setPhase("results");
+        setPhase("reveal");
       }
     }, 380);
   }
@@ -66,23 +132,51 @@ export function QuizClient() {
     setCurrent(0);
     setAnswers({});
     setSelectedChoice(null);
+    setGamification(null);
+    setLeaderboard(null);
+    gamificationFired.current = false;
+    confettiFired.current = false;
+    setIsRetake(true);
   }
 
   if (phase === "intro") {
     return <IntroScreen onStart={() => setPhase("quiz")} />;
   }
 
-  if (phase === "results") {
+  if (phase === "reveal" || phase === "results") {
     const code = calculateResult(answers);
     const profile =
       GUT_PROFILES.find((p) => p.code === code) ?? GUT_PROFILES[0];
+
+    if (phase === "reveal") {
+      return (
+        <ProfileReveal
+          profile={profile}
+          onContinue={() => setPhase("results")}
+        />
+      );
+    }
+
     const axisScores = getAxisScores(answers);
+    const gutScore = calculateGutHealthScore(axisScores);
     return (
-      <ResultsScreen
-        profile={profile}
-        axisScores={axisScores}
-        onRetake={handleRetake}
-      />
+      <>
+        {gamification && gamification.newBadges.length > 0 && (
+          <BadgeEarnToast
+            badges={gamification.newBadges}
+            xpAwarded={gamification.xpAwarded}
+          />
+        )}
+        <ResultsScreen
+          profile={profile}
+          axisScores={axisScores}
+          gutScore={gutScore}
+          gamification={gamification}
+          gamificationLoading={gamificationLoading}
+          leaderboard={leaderboard}
+          onRetake={handleRetake}
+        />
+      </>
     );
   }
 
@@ -139,13 +233,11 @@ function FlowerSvg({ className }: { className?: string }) {
 function IntroScreen({ onStart }: { onStart: () => void }) {
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
-      {/* Botanical background blobs */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 hero-botanical"
       />
 
-      {/* Decorative leaves */}
       <LeafSvg className="pointer-events-none absolute -left-8 top-12 h-48 w-48 rotate-12 text-primary/10" />
       <LeafSvg className="pointer-events-none absolute -right-6 bottom-16 h-36 w-36 -rotate-[25deg] text-accent/15" />
       <FlowerSvg className="pointer-events-none absolute right-16 top-10 h-20 w-20 text-primary/8" />
@@ -241,7 +333,6 @@ function QuizScreen({
 }: QuizScreenProps) {
   return (
     <div className="flex flex-1 flex-col">
-      {/* Progress bar */}
       <div className="h-1.5 w-full bg-muted">
         <div
           className="progress-botanical h-full rounded-r-full transition-all duration-500"
@@ -250,7 +341,6 @@ function QuizScreen({
       </div>
 
       <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-7 px-4 py-10">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
             {questionNumber} / {total}
@@ -260,12 +350,10 @@ function QuizScreen({
           </span>
         </div>
 
-        {/* Question */}
         <h2 className="text-xl font-bold leading-snug tracking-tight sm:text-2xl">
           {question.text}
         </h2>
 
-        {/* 4 Options */}
         <div className="flex flex-col gap-3">
           {CHOICE_LABELS.map((choice) => {
             const isSelected = selectedChoice === choice;
@@ -289,7 +377,6 @@ function QuizScreen({
                   isPending && "opacity-35",
                 )}
               >
-                {/* Letter badge */}
                 <span
                   className={cn(
                     "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold transition-colors",
@@ -308,7 +395,6 @@ function QuizScreen({
           })}
         </div>
 
-        {/* Back */}
         <div>
           <Button variant="ghost" size="sm" onClick={onBack}>
             ← Back
@@ -321,16 +407,178 @@ function QuizScreen({
 
 // ── Results ────────────────────────────────────────────────
 
+const AXIS_ICONS: Record<AxisKey, string> = {
+  diversity: "🦠",
+  inflammation: "💚",
+  resilience: "🛡️",
+  fiber: "🥦",
+};
+
+interface AxisInsight {
+  tier: string;
+  tierColor: string;
+  barColor: string;
+  message: string;
+  action: string;
+}
+
+function getAxisInsight(axisKey: AxisKey, pct: number): AxisInsight {
+  if (axisKey === "diversity") {
+    if (pct >= 0.7)
+      return {
+        tier: "Excellent",
+        tierColor: "text-emerald-600 dark:text-emerald-400",
+        barColor: "bg-emerald-500",
+        message:
+          "Your microbiome diversity is one of your strongest assets. A varied ecosystem means stronger immunity, more stable energy, and better protection against pathogens.",
+        action:
+          "Keep rotating your plant foods — try adding one new vegetable, grain, or fermented food this week.",
+      };
+    if (pct >= 0.4)
+      return {
+        tier: "Moderate",
+        tierColor: "text-amber-600 dark:text-amber-400",
+        barColor: "bg-amber-500",
+        message:
+          "Your diversity is in the middle range. This is often the fastest lever to pull — small changes to food variety can noticeably shift your microbiome within weeks.",
+        action:
+          "Swap one of your usual staple foods for something different this week (e.g., white rice → quinoa, regular yogurt → kefir).",
+      };
+    return {
+      tier: "Needs Attention",
+      tierColor: "text-red-600 dark:text-red-400",
+      barColor: "bg-red-500",
+      message:
+        "Diversity is your biggest growth opportunity right now. A less varied microbiome means fewer protective bacterial strains and more vulnerability to digestive disruption.",
+      action:
+        "Start with one new plant food per week — variety over the long term is more important than quantity short-term.",
+    };
+  }
+  if (axisKey === "inflammation") {
+    if (pct >= 0.7)
+      return {
+        tier: "Well Controlled",
+        tierColor: "text-emerald-600 dark:text-emerald-400",
+        barColor: "bg-emerald-500",
+        message:
+          "Your inflammation balance is strong. Your dietary choices are actively keeping gut inflammation at bay, which benefits energy levels, mood, and immune resilience.",
+        action:
+          "Maintain your anti-inflammatory habits — omega-3s, colourful vegetables, and fermented foods are your allies.",
+      };
+    if (pct >= 0.4)
+      return {
+        tier: "Mixed",
+        tierColor: "text-amber-600 dark:text-amber-400",
+        barColor: "bg-amber-500",
+        message:
+          "Your inflammation markers are mixed. Some habits are helping, but others may be triggering low-grade gut inflammation that affects digestion, skin, and energy over time.",
+        action:
+          "Try removing one known inflammatory food this week — processed sugar, refined oils, or alcohol — and observe how you feel.",
+      };
+    return {
+      tier: "Elevated",
+      tierColor: "text-red-600 dark:text-red-400",
+      barColor: "bg-red-500",
+      message:
+        "Your score suggests your gut may be in a low-grade inflammatory state. This is very common and very addressable — it's often one of the first things to respond to dietary changes.",
+      action:
+        "Prioritise anti-inflammatory foods this week: oily fish, turmeric, leafy greens, and extra-virgin olive oil.",
+    };
+  }
+  if (axisKey === "resilience") {
+    if (pct >= 0.7)
+      return {
+        tier: "Strong",
+        tierColor: "text-emerald-600 dark:text-emerald-400",
+        barColor: "bg-emerald-500",
+        message:
+          "Your gut bounces back well from disruptions. Travel, stress, and the occasional indulgent meal are less likely to derail your digestion for long periods.",
+        action:
+          "Protect your resilience with consistent sleep — gut bacteria follow a circadian rhythm and suffer with irregular schedules.",
+      };
+    if (pct >= 0.4)
+      return {
+        tier: "Moderate",
+        tierColor: "text-amber-600 dark:text-amber-400",
+        barColor: "bg-amber-500",
+        message:
+          "Your gut resilience is moderate — you likely notice digestive struggles during stressful periods or when your routine changes significantly.",
+        action:
+          "Add a probiotic-rich food daily (live yogurt, kefir, or kombucha) to help stabilise your gut environment.",
+      };
+    return {
+      tier: "Sensitive",
+      tierColor: "text-red-600 dark:text-red-400",
+      barColor: "bg-red-500",
+      message:
+        "Your gut shows lower resilience and is more reactive to stress, antibiotics, or dietary disruptions. The good news: resilience responds well to consistent, targeted care.",
+      action:
+        "Focus on sleep and stress management this week — both directly affect gut permeability and bacterial stability.",
+    };
+  }
+  // fiber
+  if (pct >= 0.7)
+    return {
+      tier: "High",
+      tierColor: "text-emerald-600 dark:text-emerald-400",
+      barColor: "bg-emerald-500",
+      message:
+        "Your fiber intake is excellent. Fiber is literally food for your gut bacteria — it fuels production of short-chain fatty acids that protect your gut lining and reduce inflammation.",
+      action:
+        "Great work — try rotating fiber sources (psyllium, flax, chicory root) to feed different bacterial strains.",
+    };
+  if (pct >= 0.4)
+    return {
+      tier: "Moderate",
+      tierColor: "text-amber-600 dark:text-amber-400",
+      barColor: "bg-amber-500",
+      message:
+        "Your fiber intake is moderate. Small increases here yield outsized benefits — most people see real improvements in digestion and energy within 2–3 weeks of boosting fiber.",
+      action:
+        "Add one serving of legumes (beans, lentils, or chickpeas) to your diet every other day this week.",
+    };
+  return {
+    tier: "Low",
+    tierColor: "text-red-600 dark:text-red-400",
+    barColor: "bg-red-500",
+    message:
+      "Fiber is your clearest and most impactful opportunity. Most modern diets under-fuel gut bacteria significantly, and the effects compound over time.",
+    action:
+      "Start today: swap refined grains for whole grains and add a tablespoon of flaxseed or chia to one meal daily.",
+  };
+}
+
 interface ResultsScreenProps {
   profile: GutProfile;
   axisScores: Record<AxisKey, { score: number; max: number }>;
+  gutScore: number;
+  gamification: GamificationResult | null;
+  gamificationLoading: boolean;
+  leaderboard: LeaderboardEntry[] | null;
   onRetake: () => void;
 }
 
-function ResultsScreen({ profile, axisScores, onRetake }: ResultsScreenProps) {
+function ResultsScreen({
+  profile,
+  axisScores,
+  gutScore,
+  gamification,
+  gamificationLoading,
+  leaderboard,
+  onRetake,
+}: ResultsScreenProps) {
+  const isAnon = gamification && !gamification.isAuthenticated;
+
+  const weakestAxis = AXIS_ORDER.reduce((weakest, axisKey) => {
+    const { score, max } = axisScores[axisKey];
+    const pct = max > 0 ? score / max : 0.5;
+    const { score: ws, max: wm } = axisScores[weakest];
+    const weakestPct = wm > 0 ? ws / wm : 0.5;
+    return pct < weakestPct ? axisKey : weakest;
+  });
+
   return (
     <div className="relative overflow-hidden">
-      {/* Subtle botanical background */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 hero-botanical opacity-60"
@@ -362,44 +610,102 @@ function ResultsScreen({ profile, axisScores, onRetake }: ResultsScreenProps) {
           </p>
         </div>
 
+        {/* Gut Health Score + XP */}
+        <div className="flex items-center justify-around rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <GutHealthScore score={gutScore} size="md" />
+          <div className="h-12 w-px bg-border" />
+          <div className="flex flex-col items-center gap-1">
+            {gamificationLoading ? (
+              <div className="h-8 w-20 animate-pulse rounded-lg bg-muted" />
+            ) : gamification ? (
+              <>
+                <span className="text-2xl font-black text-primary tabular-nums">
+                  +{gamification.xpAwarded}
+                </span>
+                <span className="text-xs text-muted-foreground">XP earned</span>
+                {gamification.newLevel && (
+                  <span className="mt-1 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-bold text-accent">
+                    Level up! {gamification.newLevel.name}
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-xl font-black text-primary">100+</span>
+                <span className="text-xs text-muted-foreground">
+                  XP available
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Description */}
         <div className="rounded-2xl border border-border bg-card p-5 text-sm leading-relaxed text-muted-foreground shadow-sm">
           {profile.description}
         </div>
 
-        {/* Axis breakdown */}
-        <div className="flex flex-col gap-5">
+        {/* Personalised axis insights */}
+        <div className="flex flex-col gap-4">
           <h2 className="flex items-center gap-2 font-bold">
             <LeafSvg className="h-4 w-4 text-primary" />
-            Your axis breakdown
+            Your personalised gut analysis
           </h2>
           {AXIS_ORDER.map((axisKey) => {
             const { score, max } = axisScores[axisKey];
             const pct = max > 0 ? score / max : 0.5;
-            const isPositive = pct >= 0.5;
+            const displayPct = Math.round(pct * 100);
             const labels = AXIS_LABELS[axisKey];
-            const dominantLabel = isPositive
-              ? labels.positive
-              : labels.negative;
-            const displayPct = isPositive
-              ? Math.round(pct * 100)
-              : Math.round((1 - pct) * 100);
+            const insight = getAxisInsight(axisKey, pct);
+            const isWeakest = axisKey === weakestAxis;
 
             return (
-              <div key={axisKey} className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{labels.label}</span>
-                  <span className="font-semibold">{dominantLabel}</span>
+              <div
+                key={axisKey}
+                className={cn(
+                  "rounded-2xl border bg-card p-4 shadow-sm flex flex-col gap-3",
+                  isWeakest
+                    ? "border-amber-300/60 dark:border-amber-700/40"
+                    : "border-border",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{AXIS_ICONS[axisKey]}</span>
+                    <span className="font-semibold text-sm">
+                      {labels.label}
+                    </span>
+                    {isWeakest && (
+                      <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                        Focus area
+                      </span>
+                    )}
+                  </div>
+                  <span className={cn("text-xs font-bold", insight.tierColor)}>
+                    {insight.tier}
+                  </span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="progress-botanical h-full rounded-full transition-all duration-700"
-                    style={{ width: `${displayPct}%` }}
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-700",
+                        insight.barColor,
+                      )}
+                      style={{ width: `${displayPct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold tabular-nums text-muted-foreground w-8 text-right">
+                    {displayPct}%
+                  </span>
                 </div>
-                <p className="text-right text-xs text-muted-foreground">
-                  {displayPct}% match
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {insight.message}
                 </p>
+                <div className="flex items-start gap-2 rounded-xl bg-muted/50 px-3 py-2.5">
+                  <span className="text-xs shrink-0 mt-0.5">💡</span>
+                  <p className="text-xs font-medium">{insight.action}</p>
+                </div>
               </div>
             );
           })}
@@ -426,6 +732,152 @@ function ResultsScreen({ profile, axisScores, onRetake }: ResultsScreenProps) {
           </ul>
         </div>
 
+        {/* Badge section */}
+        {gamification &&
+          (isAnon ? (
+            <div className="rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-lg">🔒</span>
+                <span className="font-bold text-sm">Unlock your badges</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                You would earn{" "}
+                <strong>
+                  {gamification.newBadges.length} badge
+                  {gamification.newBadges.length !== 1 ? "s" : ""}
+                </strong>{" "}
+                and <strong>{gamification.xpAwarded} XP</strong> — sign in to
+                save your progress.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {gamification.newBadges.map((b) => (
+                  <span
+                    key={b.id}
+                    className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-semibold opacity-60 grayscale"
+                  >
+                    {b.icon} {b.name}
+                  </span>
+                ))}
+              </div>
+              <Button asChild size="sm" className="rounded-xl w-full">
+                <Link href="/login?next=/quiz">Sign in to save progress</Link>
+              </Button>
+            </div>
+          ) : gamification.newBadges.length > 0 ? (
+            <BadgeDisplay
+              earnedIds={gamification.newBadges.map((b) => b.id)}
+              newIds={gamification.newBadges.map((b) => b.id)}
+              showAll={false}
+            />
+          ) : null)}
+
+        {/* How to earn XP + improve your score */}
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm flex flex-col gap-4">
+          <h2 className="font-bold flex items-center gap-2 text-base">
+            <span>⚡</span> How to earn more XP & improve your gut score
+          </h2>
+          <div className="flex flex-col gap-2">
+            {[
+              {
+                icon: "🔬",
+                label: "Complete the Snapshot Quiz",
+                xp: "100 XP",
+                done: true,
+              },
+              {
+                icon: "📅",
+                label: "Log each day of the 7-Day Journal",
+                xp: "+50 XP / day",
+                done: false,
+              },
+              {
+                icon: "🔥",
+                label: "Keep a daily logging streak",
+                xp: "+10 XP bonus",
+                done: false,
+              },
+              {
+                icon: "🏆",
+                label: "Finish all 7 journal days",
+                xp: "+200 XP bonus",
+                done: false,
+              },
+              {
+                icon: "🏅",
+                label: "Earn badges (25–100 XP each)",
+                xp: "+up to 100 XP",
+                done: false,
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm",
+                  item.done
+                    ? "bg-primary/5 border border-primary/20"
+                    : "bg-muted/40",
+                )}
+              >
+                <span className="text-base shrink-0">{item.icon}</span>
+                <span
+                  className={cn(
+                    "flex-1 text-xs",
+                    item.done ? "font-semibold" : "text-muted-foreground",
+                  )}
+                >
+                  {item.label}
+                </span>
+                <span
+                  className={cn(
+                    "font-bold tabular-nums text-xs shrink-0",
+                    item.done ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  {item.xp}
+                </span>
+                {item.done && (
+                  <span className="text-primary text-xs font-bold">✓</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            The 7-Day Journal gives a far more accurate gut profile than this
+            snapshot — and it's your biggest XP source.
+          </p>
+          <Button asChild className="rounded-xl w-full">
+            <Link href={isAnon ? "/login?next=/track" : "/track"}>
+              {isAnon
+                ? "Sign in to start your 7-Day Journal"
+                : "Start your 7-Day Journal →"}
+            </Link>
+          </Button>
+        </div>
+
+        {/* Leaderboard */}
+        {leaderboard !== null && (
+          <Leaderboard
+            entries={leaderboard}
+            currentUserXP={gamification?.totalXP}
+          />
+        )}
+        {leaderboard === null && (
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="h-4 w-32 animate-pulse rounded bg-muted mb-3" />
+            <div className="flex flex-col gap-2">
+              {(["a", "b", "c", "d", "e"] as const).map((k) => (
+                <div
+                  key={k}
+                  className="h-10 rounded-xl bg-muted/50 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Share card */}
+        <ShareCard profile={profile} gutScore={gutScore} />
+
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
           <Button asChild className="rounded-xl">
@@ -434,6 +886,11 @@ function ResultsScreen({ profile, axisScores, onRetake }: ResultsScreenProps) {
           <Button variant="outline" className="rounded-xl" onClick={onRetake}>
             Retake the quiz
           </Button>
+          {gamification?.isAuthenticated && (
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link href="/profile">View my profile</Link>
+            </Button>
+          )}
         </div>
 
         <p className="text-xs text-muted-foreground">

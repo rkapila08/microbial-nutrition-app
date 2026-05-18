@@ -10,7 +10,17 @@
       "Bash(npx @biomejs/biome check --write src/app/quiz/quiz-client.tsx)",
       "Bash(pnpm dev:*)",
       "Bash(npx @biomejs/biome check --write .)",
-      "Bash(npx @biomejs/biome check --error-on-warnings src/app/page.tsx)"
+      "Bash(npx @biomejs/biome check --error-on-warnings src/app/page.tsx)",
+      "Bash(npx tsc *)",
+      "Bash(env SKIP_ENV_VALIDATION=true pnpm typecheck)",
+      "Bash(grep -v \"^$\")",
+      "Bash(npx @biomejs/biome check --write src/components/hero-background.tsx)",
+      "Bash(npx @biomejs/biome check --write src/app/page.tsx src/components/motion-wrappers.tsx)",
+      "Bash(npx @biomejs/biome check --write src/components/profile-reveal.tsx src/app/quiz/quiz-client.tsx)",
+      "Bash(npx @biomejs/biome check --write --unsafe src/components/profile-reveal.tsx)",
+      "Bash(npx @biomejs/biome check --error-on-warnings src/components/profile-reveal.tsx)",
+      "Bash(node -e ' *)",
+      "Bash(npx @biomejs/biome check --write src/components/profile-reveal.tsx)"
     ]
   }
 }

@@ -1,0 +1,1452 @@
+// gut-scenes.jsx
+// Scene components for the "Inside Out" gut microbiome animation.
+// Palette: warm cream BG, deep moss INK, sage greens.
+// Helvetica throughout. Same nested-LocalSprite pattern as cosmic.
+
+const GHELV  = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const GUT_BG    = '#f1ecdd';       // warm cream
+const GUT_INK   = '#1f3a2b';       // deep moss
+const GUT_ACC   = '#4f9e6f';       // vibrant sage green
+const GUT_SOFT  = '#cfdcc1';       // pale sage fill
+const GUT_PALE  = '#e8e3d2';       // tinted cream
+const GUT_DIM   = 'rgba(31,58,43,0.55)';
+const GUT_HAIR  = 'rgba(31,58,43,0.28)';
+const GUT_FAINT = 'rgba(31,58,43,0.14)';
+
+// ─────────────────────────────────────────────────────────────────────────
+// LocalSprite — windows on parent's localTime (same pattern as cosmic)
+// ─────────────────────────────────────────────────────────────────────────
+function GLocalSprite({ start = 0, end = Infinity, children }) {
+  const parent = useSprite();
+  const lt = parent.localTime;
+  const visible = lt >= start && lt <= end;
+  if (!visible) return null;
+  const duration = end - start;
+  const localTime = Math.max(0, lt - start);
+  const progress = duration > 0 && isFinite(duration)
+    ? clamp(localTime / duration, 0, 1) : 0;
+  const value = { localTime, progress, duration, visible };
+  return (
+    <SpriteContext.Provider value={value}>
+      {typeof children === 'function' ? children(value) : children}
+    </SpriteContext.Provider>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Shared chrome
+// ─────────────────────────────────────────────────────────────────────────
+function GutChrome({ sceneIndex, sceneTitle, sceneTotal, progress }) {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      pointerEvents: 'none',
+      fontFamily: GHELV,
+      color: GUT_INK,
+    }}>
+      {/* corner hairlines */}
+      {[
+        {top: 40, left: 40, b: 'top left'},
+        {top: 40, right: 40, b: 'top right'},
+        {bottom: 40, left: 40, b: 'bottom left'},
+        {bottom: 40, right: 40, b: 'bottom right'},
+      ].map((p, i) => (
+        <div key={i} style={{
+          position: 'absolute',
+          top: p.top, left: p.left, right: p.right, bottom: p.bottom,
+          width: 14, height: 14,
+          borderTop:    p.b.includes('top')    ? `1px solid ${GUT_HAIR}` : 'none',
+          borderBottom: p.b.includes('bottom') ? `1px solid ${GUT_HAIR}` : 'none',
+          borderLeft:   p.b.includes('left')   ? `1px solid ${GUT_HAIR}` : 'none',
+          borderRight:  p.b.includes('right')  ? `1px solid ${GUT_HAIR}` : 'none',
+        }} />
+      ))}
+
+      <div style={{
+        position: 'absolute', top: 56, left: 72,
+        fontSize: 12, letterSpacing: '0.22em',
+        color: GUT_DIM, textTransform: 'uppercase',
+      }}>
+        Inside Out — a short film about the trillions inside you
+      </div>
+
+      <div style={{
+        position: 'absolute', top: 56, right: 72,
+        fontSize: 12, letterSpacing: '0.22em',
+        color: GUT_DIM, textTransform: 'uppercase',
+        fontVariantNumeric: 'tabular-nums',
+      }}>
+        {String(sceneIndex).padStart(2,'0')} / {String(sceneTotal).padStart(2,'0')} &nbsp;·&nbsp; {sceneTitle}
+      </div>
+
+      <div style={{
+        position: 'absolute', bottom: 56, left: 72,
+        fontSize: 11, letterSpacing: '0.22em',
+        color: GUT_DIM, textTransform: 'uppercase',
+      }}>
+        Figures are approximate · Not medical advice
+      </div>
+
+      <div style={{
+        position: 'absolute', bottom: 56, right: 72,
+        width: 220, height: 1, background: GUT_FAINT,
+      }}>
+        <div style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0,
+          width: `${progress * 100}%`,
+          background: GUT_INK,
+        }} />
+      </div>
+    </div>
+  );
+}
+
+function GutChromeForCurrentTime({ scenes, totalDuration }) {
+  const t = useTime();
+  let idx = 0;
+  for (let i = 0; i < scenes.length; i++) {
+    if (t >= scenes[i].start && t < scenes[i].end) { idx = i; break; }
+    if (t >= scenes[i].end) idx = i;
+  }
+  const s = scenes[idx];
+  return (
+    <GutChrome
+      sceneIndex={idx + 1}
+      sceneTitle={s.title}
+      sceneTotal={scenes.length}
+      progress={t / totalDuration}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────
+function GDot({ cx, cy, r, fill = GUT_INK, opacity = 1 }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      left: cx - r, top: cy - r,
+      width: r * 2, height: r * 2,
+      borderRadius: '50%',
+      background: fill,
+      opacity,
+    }} />
+  );
+}
+
+function GRing({ cx, cy, r, color = GUT_INK, strokeWidth = 1, opacity = 1, dashed = false }) {
+  return (
+    <svg
+      style={{
+        position: 'absolute',
+        left: cx - r - 4, top: cy - r - 4,
+        width: r * 2 + 8, height: r * 2 + 8,
+        overflow: 'visible',
+        opacity,
+      }}
+    >
+      <circle
+        cx={r + 4} cy={r + 4} r={r}
+        fill="none"
+        stroke={color} strokeWidth={strokeWidth}
+        strokeDasharray={dashed ? '4 6' : undefined}
+      />
+    </svg>
+  );
+}
+
+// Cloud of bacteria-dots, deterministic given seed. Used in several scenes.
+function useBacteriaCloud({ n = 220, cx = 960, cy = 540, radius = 360, seed = 1, shape = 'disc' }) {
+  return React.useMemo(() => {
+    let s = seed * 9301 + 49297;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      let x, y, dr;
+      if (shape === 'disc') {
+        const a = rnd() * Math.PI * 2;
+        const r = Math.sqrt(rnd()) * radius;
+        x = cx + Math.cos(a) * r;
+        y = cy + Math.sin(a) * r;
+        dr = 1.5 + rnd() * 3.5;
+      } else {
+        x = cx + (rnd() - 0.5) * radius * 2;
+        y = cy + (rnd() - 0.5) * radius;
+        dr = 1.5 + rnd() * 3.5;
+      }
+      out.push({
+        x, y, r: dr,
+        delay: rnd() * 0.9,
+        drift: rnd() * 2 - 1,
+        kind: rnd() < 0.7 ? 'coccus' : 'bacillus', // round vs rod
+      });
+    }
+    return out;
+  }, [n, cx, cy, radius, seed, shape]);
+}
+
+// Tiny bacterium glyph — either a small circle (coccus) or a rod (bacillus).
+function Microbe({ x, y, r, opacity = 1, kind = 'coccus', rot = 0, fill = GUT_INK }) {
+  if (kind === 'bacillus') {
+    return (
+      <div style={{
+        position: 'absolute',
+        left: x - r * 1.8, top: y - r * 0.6,
+        width: r * 3.6, height: r * 1.2,
+        borderRadius: r,
+        background: fill,
+        opacity,
+        transform: `rotate(${rot}deg)`,
+      }}/>
+    );
+  }
+  return (
+    <div style={{
+      position: 'absolute',
+      left: x - r, top: y - r,
+      width: r * 2, height: r * 2,
+      borderRadius: '50%',
+      background: fill,
+      opacity,
+    }}/>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 01 — TITLE
+// Dots bloom outward from center, then title types in.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene01_Title() {
+  const { localTime } = useSprite();
+  const dots = useBacteriaCloud({ n: 140, cx: 960, cy: 540, radius: 540, seed: 11 });
+
+  return (
+    <>
+      {dots.map((d, i) => {
+        const t = Easing.easeOutCubic(clamp((localTime - d.delay) / 1.4, 0, 1));
+        const a = Math.atan2(d.y - 540, d.x - 960);
+        const baseR = Math.hypot(d.x - 960, d.y - 540);
+        const cur = baseR * t;
+        const x = 960 + Math.cos(a) * cur;
+        const y = 540 + Math.sin(a) * cur;
+        const op = t * 0.85;
+        const exit = clamp((localTime - 4.4) / 0.8, 0, 1);
+        return (
+          <Microbe
+            key={i} x={x} y={y} r={d.r}
+            kind={d.kind}
+            rot={a * 180 / Math.PI}
+            opacity={op * (1 - exit)}
+            fill={d.kind === 'bacillus' ? GUT_ACC : GUT_INK}
+          />
+        );
+      })}
+
+      <GLocalSprite start={0.5} end={5.0}>
+        <TextSprite
+          text="INSIDE OUT"
+          x={960} y={520}
+          size={170} weight={700}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="-0.02em"
+          align="center"
+          entryDur={0.7} exitDur={0.5}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.85} end={5.0}>
+        <TextSprite
+          text="The trillions inside you."
+          x={960} y={690}
+          size={36} weight={300}
+          color={GUT_ACC} font={GHELV}
+          letterSpacing="0.02em"
+          align="center"
+          entryDur={0.7} exitDur={0.45}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={1.7} end={5.0}>
+        <TextSprite
+          text="A SHORT FILM ABOUT YOUR MICROBIOME"
+          x={960} y={840}
+          size={13} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.45em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 02 — 38 TRILLION bacteria
+// Counter rolls up; cloud of dots multiplies behind.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene02_Count() {
+  const { localTime, duration } = useSprite();
+  const dots = useBacteriaCloud({ n: 280, cx: 960, cy: 580, radius: 480, seed: 22 });
+
+  // count appears 0.6 → 4.5
+  const cStart = 0.6, cEnd = 4.6;
+  const cT = Easing.easeOutCubic(clamp((localTime - cStart) / (cEnd - cStart), 0, 1));
+  const val = 38_000_000_000_000 * cT;
+
+  return (
+    <>
+      {dots.map((d, i) => {
+        const t = Easing.easeOutCubic(clamp((localTime - d.delay * 0.5) / 1.6, 0, 1));
+        const exit = clamp((localTime - duration + 0.8) / 0.8, 0, 1);
+        const a = Math.atan2(d.y - 580, d.x - 960);
+        return (
+          <Microbe
+            key={i}
+            x={d.x} y={d.y} r={d.r * (0.6 + 0.4 * t)}
+            kind={d.kind}
+            rot={a * 180 / Math.PI}
+            opacity={t * 0.6 * (1 - exit)}
+            fill={i % 5 === 0 ? GUT_ACC : GUT_INK}
+          />
+        );
+      })}
+
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="RIGHT NOW, INSIDE YOU —"
+          x={960} y={200}
+          size={16} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      {/* Big counter */}
+      <div style={{
+        position: 'absolute', left: 960, top: 460,
+        transform: 'translate(-50%, -50%)',
+        fontFamily: GHELV, color: GUT_INK,
+        fontSize: 180, fontWeight: 300,
+        letterSpacing: '-0.02em',
+        fontVariantNumeric: 'tabular-nums',
+        whiteSpace: 'nowrap',
+        opacity: clamp((localTime - 0.3) / 0.6, 0, 1) * (1 - clamp((localTime - duration + 0.6) / 0.6, 0, 1)),
+      }}>
+        {Math.round(val).toLocaleString()}
+      </div>
+
+      <GLocalSprite start={1.0} end={duration - 0.2}>
+        <TextSprite
+          text="BACTERIA"
+          x={960} y={600}
+          size={28} weight={400}
+          color={GUT_ACC} font={GHELV}
+          letterSpacing="0.5em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+
+      <GLocalSprite start={cEnd + 0.1} end={duration - 0.2}>
+        <TextSprite
+          text="THAT'S 38 TRILLION CELLS THAT AREN'T YOU."
+          x={960} y={920}
+          size={18} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.3em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 03 — 1:1 ratio with human cells
+// Two columns: bacterial dots vs human-cell rings.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene03_Ratio() {
+  const { localTime, duration } = useSprite();
+
+  // left column: bacterial cells (small green dots)
+  // right column: human cells (larger pale circles with rings)
+  // build deterministic grid
+  const leftDots = React.useMemo(() => {
+    let s = 7;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const out = [];
+    for (let row = 0; row < 14; row++) {
+      for (let col = 0; col < 11; col++) {
+        out.push({
+          x: 220 + col * 50 + rnd() * 14,
+          y: 300 + row * 44 + rnd() * 12,
+          r: 4 + rnd() * 3,
+          d: rnd() * 0.6,
+          kind: rnd() < 0.6 ? 'coccus' : 'bacillus',
+        });
+      }
+    }
+    return out;
+  }, []);
+
+  const rightCells = React.useMemo(() => {
+    let s = 91;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const out = [];
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 4; col++) {
+        out.push({
+          x: 1180 + col * 130 + rnd() * 10,
+          y: 320 + row * 130 + rnd() * 10,
+          r: 38 + rnd() * 10,
+          d: rnd() * 0.5,
+        });
+      }
+    }
+    return out;
+  }, []);
+
+  return (
+    <>
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="THERE ARE NEARLY AS MANY MICROBES IN YOU"
+          x={960} y={150}
+          size={18} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.4} end={duration - 0.2}>
+        <TextSprite
+          text="AS THERE ARE CELLS OF YOU."
+          x={960} y={200}
+          size={18} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      {/* left side bacteria */}
+      {leftDots.map((d, i) => {
+        const t = Easing.easeOutCubic(clamp((localTime - 0.6 - d.d) / 0.7, 0, 1));
+        const a = ((i * 137) % 360);
+        return (
+          <Microbe
+            key={'l' + i} x={d.x} y={d.y} r={d.r * t}
+            kind={d.kind}
+            rot={a}
+            opacity={t * 0.95}
+            fill={i % 4 === 0 ? GUT_ACC : GUT_INK}
+          />
+        );
+      })}
+
+      {/* right side human cells (rings with pale fill) */}
+      {rightCells.map((d, i) => {
+        const t = Easing.easeOutCubic(clamp((localTime - 0.9 - d.d) / 0.8, 0, 1));
+        return (
+          <React.Fragment key={'r' + i}>
+            <div style={{
+              position: 'absolute',
+              left: d.x - d.r * t, top: d.y - d.r * t,
+              width: d.r * 2 * t, height: d.r * 2 * t,
+              borderRadius: '50%',
+              background: GUT_SOFT,
+              opacity: 0.75 * t,
+            }}/>
+            <div style={{
+              position: 'absolute',
+              left: d.x - d.r * t, top: d.y - d.r * t,
+              width: d.r * 2 * t, height: d.r * 2 * t,
+              borderRadius: '50%',
+              border: `1px solid ${GUT_INK}`,
+              opacity: t,
+              boxSizing: 'border-box',
+            }}/>
+            <div style={{
+              position: 'absolute',
+              left: d.x, top: d.y,
+              transform: 'translate(-50%, -50%)',
+              width: 6, height: 6,
+              borderRadius: '50%',
+              background: GUT_INK,
+              opacity: t * 0.6,
+            }}/>
+          </React.Fragment>
+        );
+      })}
+
+      {/* column labels */}
+      <GLocalSprite start={0.9} end={duration - 0.2}>
+        {() => (
+          <div style={{
+            position: 'absolute', left: 470, top: 970,
+            transform: 'translateX(-50%)',
+            textAlign: 'center', fontFamily: GHELV,
+          }}>
+            <div style={{ fontSize: 64, fontWeight: 300, color: GUT_INK, letterSpacing: '-0.01em' }}>
+              <CountUp from={0} to={38} format={v => v.toFixed(1)} startAt={0} endAt={0.6} /> trillion
+            </div>
+            <div style={{ fontSize: 12, letterSpacing: '0.4em', color: GUT_DIM, marginTop: 8, textTransform: 'uppercase' }}>
+              Microbial cells
+            </div>
+          </div>
+        )}
+      </GLocalSprite>
+      <GLocalSprite start={1.1} end={duration - 0.2}>
+        {() => (
+          <div style={{
+            position: 'absolute', left: 1380, top: 970,
+            transform: 'translateX(-50%)',
+            textAlign: 'center', fontFamily: GHELV,
+          }}>
+            <div style={{ fontSize: 64, fontWeight: 300, color: GUT_INK, letterSpacing: '-0.01em' }}>
+              <CountUp from={0} to={30} format={v => v.toFixed(1)} startAt={0} endAt={0.6} /> trillion
+            </div>
+            <div style={{ fontSize: 12, letterSpacing: '0.4em', color: GUT_DIM, marginTop: 8, textTransform: 'uppercase' }}>
+              Human cells
+            </div>
+          </div>
+        )}
+      </GLocalSprite>
+
+      {/* the ratio in the middle */}
+      <GLocalSprite start={3.0} end={duration - 0.2}>
+        {({ progress }) => (
+          <div style={{
+            position: 'absolute', left: 960, top: 550,
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center', fontFamily: GHELV,
+            opacity: Easing.easeOutCubic(clamp(progress * 2.5, 0, 1)),
+          }}>
+            <div style={{ fontSize: 22, letterSpacing: '0.45em', color: GUT_DIM, textTransform: 'uppercase' }}>Ratio</div>
+            <div style={{ fontSize: 220, fontWeight: 300, color: GUT_ACC, letterSpacing: '-0.04em', lineHeight: 0.9 }}>1.3:1</div>
+          </div>
+        )}
+      </GLocalSprite>
+    </>
+  );
+}
+
+// CountUp reused (mirror of cosmic helper, scoped here for safety)
+function CountUp({ from = 0, to = 100, format = (v) => Math.round(v).toLocaleString(), startAt = 0, endAt = 1, ease = Easing.easeOutCubic, style }) {
+  const { progress } = useSprite();
+  const localT = clamp((progress - startAt) / Math.max(0.0001, endAt - startAt), 0, 1);
+  const v = from + (to - from) * ease(localT);
+  return <span style={style}>{format(v)}</span>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 04 — SPECIES diversity
+// A cloud of differently-sized dots, each tagged with a phylum name in some.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene04_Species() {
+  const { localTime, duration } = useSprite();
+
+  const cx = 960, cy = 580;
+  const blobs = React.useMemo(() => {
+    let s = 31;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const out = [];
+    const NAMES = [
+      'Bacteroidetes', 'Firmicutes', 'Actinobacteria',
+      'Proteobacteria', 'Verrucomicrobia', 'Fusobacteria',
+    ];
+    // a few big labeled "phyla" clusters
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + 0.4;
+      out.push({
+        x: cx + Math.cos(a) * 320,
+        y: cy + Math.sin(a) * 220,
+        r: 56 + rnd() * 24,
+        label: NAMES[i],
+        big: true,
+        d: i * 0.18,
+      });
+    }
+    // many tiny species dots scattered around
+    for (let i = 0; i < 500; i++) {
+      const a = rnd() * Math.PI * 2;
+      const r = Math.pow(rnd(), 0.7) * 500;
+      out.push({
+        x: cx + Math.cos(a) * r,
+        y: cy + Math.sin(a) * r * 0.7,
+        r: 1.5 + rnd() * 3,
+        big: false,
+        d: rnd() * 1.6,
+      });
+    }
+    return out;
+  }, []);
+
+  return (
+    <>
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="EACH ONE OF US HOSTS"
+          x={960} y={140}
+          size={16} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.5} end={duration - 0.2}>
+        <TextSprite
+          text="500 – 1,000"
+          x={960} y={230}
+          size={110} weight={300}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="-0.02em"
+          align="center"
+          entryDur={0.6} exitDur={0.35}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.9} end={duration - 0.2}>
+        <TextSprite
+          text="DIFFERENT SPECIES"
+          x={960} y={380}
+          size={16} weight={400}
+          color={GUT_ACC} font={GHELV}
+          letterSpacing="0.5em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      {blobs.map((b, i) => {
+        const t = Easing.easeOutCubic(clamp((localTime - 1.0 - b.d) / 0.8, 0, 1));
+        if (b.big) {
+          return (
+            <React.Fragment key={i}>
+              <div style={{
+                position: 'absolute',
+                left: b.x - b.r * t, top: b.y - b.r * t,
+                width: b.r * 2 * t, height: b.r * 2 * t,
+                borderRadius: '50%',
+                background: i % 2 === 0 ? GUT_SOFT : 'transparent',
+                border: `1px solid ${GUT_INK}`,
+                opacity: t * 0.92,
+                boxSizing: 'border-box',
+              }}/>
+              <div style={{
+                position: 'absolute',
+                left: b.x, top: b.y + b.r + 10,
+                transform: 'translateX(-50%)',
+                fontFamily: GHELV, color: GUT_INK,
+                opacity: clamp((localTime - 1.6 - b.d) / 0.5, 0, 1),
+                fontSize: 12, letterSpacing: '0.32em', textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}>
+                {b.label}
+              </div>
+            </React.Fragment>
+          );
+        }
+        return (
+          <Microbe
+            key={i}
+            x={b.x} y={b.y} r={b.r * t}
+            opacity={t * 0.7}
+            kind={i % 4 === 0 ? 'bacillus' : 'coccus'}
+            rot={(i * 53) % 360}
+            fill={i % 7 === 0 ? GUT_ACC : GUT_INK}
+          />
+        );
+      })}
+
+      <GLocalSprite start={4.4} end={duration - 0.2}>
+        <TextSprite
+          text="AND YOUR MIX IS UNIQUE — LIKE A FINGERPRINT."
+          x={960} y={960}
+          size={16} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 05 — Weight of microbiome: 1–2 kg
+// Visual: balance scale represented as two circles connected by a beam.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene05_Weight() {
+  const { localTime, duration } = useSprite();
+  const cx = 960, cy = 560;
+
+  // left pan: bacteria cloud; right pan: a brain placeholder (just a labeled disc)
+  const leftDots = useBacteriaCloud({ n: 90, cx: 620, cy: 560, radius: 110, seed: 3 });
+
+  const tiltIn = Easing.easeOutCubic(clamp(localTime / 1.0, 0, 1));
+
+  return (
+    <>
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="ALL TOGETHER, YOUR MICROBIOME WEIGHS"
+          x={960} y={140}
+          size={16} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.4} end={duration - 0.2}>
+        <TextSprite
+          text="1 – 2 KG"
+          x={960} y={250}
+          size={160} weight={300}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.04em"
+          align="center"
+          entryDur={0.6} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      {/* balance beam (horizontal line) */}
+      <div style={{
+        position: 'absolute',
+        left: 540, top: cy + 60,
+        width: 840 * tiltIn, height: 1,
+        background: GUT_INK,
+        opacity: tiltIn,
+      }}/>
+      {/* pivot */}
+      <div style={{
+        position: 'absolute',
+        left: cx, top: cy + 60,
+        transform: 'translate(-50%, -2px)',
+        width: 0, height: 0,
+        borderLeft: '14px solid transparent',
+        borderRight: '14px solid transparent',
+        borderTop: `26px solid ${GUT_INK}`,
+        opacity: tiltIn,
+      }}/>
+
+      {/* left pan circle */}
+      <GRing cx={620} cy={cy} r={150 * tiltIn} color={GUT_INK} strokeWidth={1.2} opacity={tiltIn}/>
+      <div style={{
+        position: 'absolute',
+        left: 620 - 150 * tiltIn, top: cy - 150 * tiltIn,
+        width: 300 * tiltIn, height: 300 * tiltIn,
+        borderRadius: '50%',
+        background: GUT_SOFT,
+        opacity: tiltIn * 0.4,
+      }}/>
+      {/* bacteria inside */}
+      {leftDots.map((d, i) => {
+        const t = Easing.easeOutCubic(clamp((localTime - 1.0 - d.delay * 0.4) / 0.8, 0, 1));
+        return (
+          <Microbe
+            key={i} x={d.x} y={d.y} r={d.r * t}
+            opacity={t}
+            kind={d.kind}
+            rot={(i * 47) % 360}
+            fill={i % 4 === 0 ? GUT_ACC : GUT_INK}
+          />
+        );
+      })}
+
+      {/* right pan circle — labeled "your brain" */}
+      <GRing cx={1300} cy={cy} r={150 * tiltIn} color={GUT_INK} strokeWidth={1.2} opacity={tiltIn}/>
+      <div style={{
+        position: 'absolute',
+        left: 1300 - 150 * tiltIn, top: cy - 150 * tiltIn,
+        width: 300 * tiltIn, height: 300 * tiltIn,
+        borderRadius: '50%',
+        background: GUT_PALE,
+        opacity: tiltIn * 0.7,
+      }}/>
+      <GLocalSprite start={1.4} end={duration - 0.2}>
+        {() => (
+          <div style={{
+            position: 'absolute', left: 1300, top: cy,
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center', fontFamily: GHELV, color: GUT_INK,
+          }}>
+            <div style={{ fontSize: 42, fontWeight: 300, letterSpacing: '-0.01em' }}>1.4 kg</div>
+            <div style={{ fontSize: 11, letterSpacing: '0.4em', color: GUT_DIM, marginTop: 6, textTransform: 'uppercase' }}>your brain</div>
+          </div>
+        )}
+      </GLocalSprite>
+
+      {/* labels under pans */}
+      <GLocalSprite start={1.2} end={duration - 0.2}>
+        <TextSprite
+          text="THE MICROBES IN YOUR GUT"
+          x={620} y={cy + 200}
+          size={12} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="center"
+          entryDur={0.4} exitDur={0.3}
+        />
+      </GLocalSprite>
+
+      <GLocalSprite start={3.2} end={duration - 0.2}>
+        <TextSprite
+          text="ROUGHLY THE WEIGHT OF YOUR BRAIN."
+          x={960} y={960}
+          size={18} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 06 — The gut tube, 7–9 meters long
+// A winding line is drawn out; dots crawl along it.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene06_Length() {
+  const { localTime, duration } = useSprite();
+
+  // Build a winding path that snakes across the canvas.
+  // We'll model it as a series of bezier-ish horizontal segments.
+  const W = 1920, H = 1080;
+  const margin = 160;
+  const rows = 5;
+  const rowH = 130;
+  const startY = 360;
+
+  const pathD = React.useMemo(() => {
+    let d = '';
+    for (let i = 0; i < rows; i++) {
+      const y = startY + i * rowH;
+      const leftX = margin;
+      const rightX = W - margin;
+      if (i === 0) {
+        d += `M ${leftX} ${y} `;
+      }
+      // straight across
+      if (i % 2 === 0) {
+        d += `L ${rightX} ${y} `;
+      } else {
+        d += `L ${leftX} ${y} `;
+      }
+      // U-curve down to next row
+      if (i < rows - 1) {
+        if (i % 2 === 0) {
+          d += `C ${rightX + 80} ${y}, ${rightX + 80} ${y + rowH}, ${rightX} ${y + rowH} `;
+        } else {
+          d += `C ${leftX - 80} ${y}, ${leftX - 80} ${y + rowH}, ${leftX} ${y + rowH} `;
+        }
+      }
+    }
+    return d;
+  }, []);
+
+  const pathRef = React.useRef(null);
+  const [pathLen, setPathLen] = React.useState(0);
+  React.useEffect(() => {
+    if (pathRef.current) setPathLen(pathRef.current.getTotalLength());
+  }, [pathD]);
+
+  // Drawing progress
+  const drawP = Easing.easeInOutCubic(clamp((localTime - 0.4) / 3.0, 0, 1));
+
+  // Dots moving along the path (only after it's drawn)
+  const showDots = localTime > 2.5;
+  const dotCount = 24;
+
+  return (
+    <>
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="UNROLLED, YOUR GUT IS"
+          x={960} y={160}
+          size={16} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="center"
+          entryDur={0.4} exitDur={0.3}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.4} end={duration - 0.2}>
+        <TextSprite
+          text="7 – 9 metres long"
+          x={960} y={260}
+          size={86} weight={300}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="-0.01em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      <svg
+        width={W} height={H}
+        style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}
+      >
+        {/* faint ghost path */}
+        <path d={pathD} fill="none" stroke={GUT_HAIR} strokeWidth={42} strokeLinecap="round" strokeLinejoin="round"/>
+        <path
+          ref={pathRef}
+          d={pathD} fill="none"
+          stroke={GUT_INK} strokeWidth={38}
+          strokeLinecap="round" strokeLinejoin="round"
+          pathLength={1}
+          strokeDasharray="1 1"
+          strokeDashoffset={1 - drawP}
+        />
+        {/* inner highlight */}
+        <path
+          d={pathD} fill="none"
+          stroke={GUT_SOFT} strokeWidth={22}
+          strokeLinecap="round" strokeLinejoin="round"
+          pathLength={1}
+          strokeDasharray="1 1"
+          strokeDashoffset={1 - drawP}
+          opacity={0.8}
+        />
+
+        {/* mouth/anus markers */}
+        {drawP > 0.02 && (
+          <>
+            <circle cx={margin} cy={startY} r="6" fill={GUT_INK} />
+            <circle cx={margin} cy={startY} r="12" fill="none" stroke={GUT_INK} />
+          </>
+        )}
+        {drawP > 0.98 && (
+          <>
+            <circle cx={W - margin} cy={startY + (rows - 1) * rowH} r="6" fill={GUT_ACC} />
+            <circle cx={W - margin} cy={startY + (rows - 1) * rowH} r="12" fill="none" stroke={GUT_ACC} />
+          </>
+        )}
+
+        {/* dots moving along */}
+        {showDots && pathLen > 0 && Array.from({ length: dotCount }).map((_, i) => {
+          const phase = ((localTime - 2.5) * 0.15 + i / dotCount) % 1;
+          const pt = pathRef.current.getPointAtLength(phase * pathLen);
+          return (
+            <circle key={i} cx={pt.x} cy={pt.y} r={3 + (i % 3)} fill={i % 3 === 0 ? GUT_ACC : '#fff'} opacity={0.8}/>
+          );
+        })}
+      </svg>
+
+      {/* mouth label */}
+      <GLocalSprite start={0.7} end={duration - 0.2}>
+        <TextSprite
+          text="MOUTH"
+          x={margin} y={startY - 36}
+          size={11} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="left"
+          entryDur={0.4} exitDur={0.3}
+        />
+      </GLocalSprite>
+      {/* anus / end label */}
+      <GLocalSprite start={3.4} end={duration - 0.2}>
+        <TextSprite
+          text="…OUT"
+          x={W - margin} y={startY + (rows - 1) * rowH + 30}
+          size={11} weight={400}
+          color={GUT_ACC} font={GHELV}
+          letterSpacing="0.4em"
+          align="right"
+          entryDur={0.4} exitDur={0.3}
+        />
+      </GLocalSprite>
+
+      <GLocalSprite start={4.0} end={duration - 0.2}>
+        <TextSprite
+          text="FOOD TAKES 24 – 72 HOURS TO MAKE THE TRIP."
+          x={960} y={1000}
+          size={16} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 07 — Surface area ≈ 30 m² (size of a studio apartment)
+// Grid of squares fills in. Old myth said tennis court — debunked.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene07_Surface() {
+  const { localTime, duration } = useSprite();
+
+  // A 6×5 grid of squares = 30 squares, each "1 m²"
+  const cols = 6, rows = 5, cell = 100, gap = 8;
+  const totalW = cols * cell + (cols - 1) * gap;
+  const totalH = rows * cell + (rows - 1) * gap;
+  const x0 = 960 - totalW / 2;
+  const y0 = 460;
+
+  return (
+    <>
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="ITS INNER SURFACE, UNFOLDED:"
+          x={960} y={150}
+          size={16} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.45} end={duration - 0.2}>
+        <TextSprite
+          text="30 m²"
+          x={960} y={260}
+          size={140} weight={300}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="-0.01em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      {Array.from({ length: rows * cols }).map((_, i) => {
+        const r = Math.floor(i / cols);
+        const c = i % cols;
+        const x = x0 + c * (cell + gap);
+        const y = y0 + r * (cell + gap);
+        const d = (i / (rows * cols)) * 1.6;
+        const t = Easing.easeOutCubic(clamp((localTime - 1.2 - d) / 0.4, 0, 1));
+        const filled = i < Math.floor(t * rows * cols);
+        return (
+          <div key={i} style={{
+            position: 'absolute',
+            left: x, top: y,
+            width: cell * t, height: cell * t,
+            background: i % 5 === 0 ? GUT_ACC : (i % 3 === 0 ? GUT_SOFT : GUT_PALE),
+            border: `1px solid ${GUT_INK}`,
+            boxSizing: 'border-box',
+            opacity: t,
+            transformOrigin: 'top left',
+          }}>
+            <div style={{
+              fontFamily: GHELV, color: GUT_INK,
+              fontSize: 11, letterSpacing: '0.25em',
+              padding: '8px 10px', textTransform: 'uppercase',
+              opacity: 0.6,
+            }}>1 m²</div>
+          </div>
+        );
+      })}
+
+      <GLocalSprite start={4.0} end={duration - 0.2}>
+        <TextSprite
+          text="ABOUT THE SIZE OF A STUDIO APARTMENT."
+          x={960} y={1000}
+          size={16} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 08 — 95% of serotonin made in the gut
+// Two circles: gut (large filled) and brain (small ring) with a percentage.
+// ─────────────────────────────────────────────────────────────────────────
+function GScene08_Serotonin() {
+  const { localTime, duration } = useSprite();
+
+  const cx = 960, cy = 580;
+
+  // Big arc representing 95% — a near-full ring
+  const ringR = 240;
+  const pctT = Easing.easeOutCubic(clamp((localTime - 0.6) / 2.0, 0, 1));
+  const pct = 95 * pctT;
+  const circumference = 2 * Math.PI * ringR;
+  const filled = (pct / 100) * circumference;
+
+  return (
+    <>
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="YOUR GUT MAKES"
+          x={960} y={150}
+          size={16} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.4em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      {/* track ring */}
+      <svg
+        width={ringR * 2 + 40} height={ringR * 2 + 40}
+        style={{ position: 'absolute', left: cx - ringR - 20, top: cy - ringR - 20 }}
+      >
+        <circle
+          cx={ringR + 20} cy={ringR + 20} r={ringR}
+          fill="none"
+          stroke={GUT_HAIR}
+          strokeWidth={28}
+        />
+        <circle
+          cx={ringR + 20} cy={ringR + 20} r={ringR}
+          fill="none"
+          stroke={GUT_ACC}
+          strokeWidth={28}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${circumference - filled}`}
+          transform={`rotate(-90 ${ringR + 20} ${ringR + 20})`}
+        />
+      </svg>
+
+      {/* big percent */}
+      <div style={{
+        position: 'absolute',
+        left: cx, top: cy,
+        transform: 'translate(-50%, -50%)',
+        textAlign: 'center', fontFamily: GHELV, color: GUT_INK,
+      }}>
+        <div style={{ fontSize: 200, fontWeight: 300, letterSpacing: '-0.04em', lineHeight: 1 }}>
+          {Math.round(pct)}<span style={{ fontSize: 100, color: GUT_DIM, fontWeight: 300 }}>%</span>
+        </div>
+        <div style={{ fontSize: 14, letterSpacing: '0.45em', color: GUT_DIM, marginTop: 20, textTransform: 'uppercase' }}>
+          of your serotonin
+        </div>
+      </div>
+
+      <GLocalSprite start={3.4} end={duration - 0.2}>
+        <TextSprite
+          text="THE 'HAPPINESS HORMONE' IS LARGELY"
+          x={960} y={960}
+          size={16} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={3.65} end={duration - 0.2}>
+        <TextSprite
+          text="MADE BELOW THE NECK."
+          x={960} y={1000}
+          size={16} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.45} exitDur={0.3}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 09 — Gut-brain axis: vagus nerve, 500M neurons
+// ─────────────────────────────────────────────────────────────────────────
+function GScene09_GutBrain() {
+  const { localTime, duration } = useSprite();
+
+  const brainX = 480, brainY = 360, brainR = 150;
+  const gutX = 1440, gutY = 720, gutR = 200;
+
+  const lineT = Easing.easeInOutCubic(clamp((localTime - 0.8) / 1.2, 0, 1));
+
+  const brainIn = Easing.easeOutCubic(clamp(localTime / 0.7, 0, 1));
+  const gutIn = Easing.easeOutCubic(clamp((localTime - 0.3) / 0.7, 0, 1));
+
+  // animated pulses traveling both ways
+  const pulses = [];
+  for (let i = 0; i < 4; i++) {
+    const offset = i * 0.25;
+    const dir = i % 2 === 0 ? 1 : -1;
+    const t = ((localTime - 1.6) * 0.4 + offset) % 1;
+    if (localTime > 1.6 && t > 0 && t < 1) {
+      const u = dir > 0 ? t : (1 - t);
+      pulses.push({
+        x: brainX + (gutX - brainX) * u,
+        y: brainY + (gutY - brainY) * u,
+        dir,
+      });
+    }
+  }
+
+  return (
+    <>
+      <GLocalSprite start={0.1} end={duration - 0.2}>
+        <TextSprite
+          text="A SECOND BRAIN"
+          x={960} y={120}
+          size={64} weight={300}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.06em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.5} end={duration - 0.2}>
+        <TextSprite
+          text="THE GUT–BRAIN AXIS"
+          x={960} y={200}
+          size={14} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.5em"
+          align="center"
+          entryDur={0.5} exitDur={0.35}
+        />
+      </GLocalSprite>
+
+      {/* brain circle */}
+      <GRing cx={brainX} cy={brainY} r={brainR * brainIn} color={GUT_INK} strokeWidth={1.2} opacity={brainIn}/>
+      <div style={{
+        position: 'absolute',
+        left: brainX - brainR * brainIn, top: brainY - brainR * brainIn,
+        width: brainR * 2 * brainIn, height: brainR * 2 * brainIn,
+        borderRadius: '50%',
+        background: GUT_PALE,
+        opacity: brainIn * 0.6,
+      }}/>
+      <div style={{
+        position: 'absolute', left: brainX, top: brainY,
+        transform: 'translate(-50%, -50%)',
+        textAlign: 'center', fontFamily: GHELV, color: GUT_INK,
+        opacity: brainIn,
+      }}>
+        <div style={{ fontSize: 13, letterSpacing: '0.4em', color: GUT_DIM, textTransform: 'uppercase' }}>brain</div>
+        <div style={{ fontSize: 42, fontWeight: 300, marginTop: 6 }}>86 B</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.4em', color: GUT_DIM, textTransform: 'uppercase' }}>neurons</div>
+      </div>
+
+      {/* gut circle */}
+      <GRing cx={gutX} cy={gutY} r={gutR * gutIn} color={GUT_INK} strokeWidth={1.2} opacity={gutIn}/>
+      <div style={{
+        position: 'absolute',
+        left: gutX - gutR * gutIn, top: gutY - gutR * gutIn,
+        width: gutR * 2 * gutIn, height: gutR * 2 * gutIn,
+        borderRadius: '50%',
+        background: GUT_SOFT,
+        opacity: gutIn * 0.7,
+      }}/>
+      <div style={{
+        position: 'absolute', left: gutX, top: gutY,
+        transform: 'translate(-50%, -50%)',
+        textAlign: 'center', fontFamily: GHELV, color: GUT_INK,
+        opacity: gutIn,
+      }}>
+        <div style={{ fontSize: 13, letterSpacing: '0.4em', color: GUT_DIM, textTransform: 'uppercase' }}>gut</div>
+        <div style={{ fontSize: 56, fontWeight: 300, marginTop: 6 }}>500 M</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.4em', color: GUT_DIM, textTransform: 'uppercase' }}>neurons</div>
+      </div>
+
+      {/* connecting nerve */}
+      <svg
+        width={1920} height={1080}
+        style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}
+      >
+        <line
+          x1={brainX + Math.cos(Math.atan2(gutY - brainY, gutX - brainX)) * brainR}
+          y1={brainY + Math.sin(Math.atan2(gutY - brainY, gutX - brainX)) * brainR}
+          x2={brainX + (gutX - brainX) * lineT
+              - Math.cos(Math.atan2(gutY - brainY, gutX - brainX)) * gutR * lineT}
+          y2={brainY + (gutY - brainY) * lineT
+              - Math.sin(Math.atan2(gutY - brainY, gutX - brainX)) * gutR * lineT}
+          stroke={GUT_INK}
+          strokeWidth={1.5}
+          strokeDasharray="6 6"
+          opacity={0.8}
+        />
+        {pulses.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="6" fill={p.dir > 0 ? GUT_ACC : GUT_INK}/>
+        ))}
+        {/* label along line */}
+        {lineT > 0.6 && (
+          <text
+            x={(brainX + gutX) / 2}
+            y={(brainY + gutY) / 2 - 18}
+            textAnchor="middle"
+            fontFamily={GHELV}
+            fontSize="11"
+            fill={GUT_INK}
+            letterSpacing="3"
+            style={{ textTransform: 'uppercase' }}
+          >
+            VAGUS NERVE
+          </text>
+        )}
+      </svg>
+
+      <GLocalSprite start={3.6} end={duration - 0.2}>
+        <TextSprite
+          text="YOUR GUT HAS MORE NEURONS THAN A CAT'S BRAIN."
+          x={960} y={970}
+          size={16} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.32em"
+          align="center"
+          entryDur={0.5} exitDur={0.3}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SCENE 10 — Closing: diversity / take care of them
+// ─────────────────────────────────────────────────────────────────────────
+function GScene10_Closing() {
+  const { localTime, duration } = useSprite();
+
+  const cx = 960, cy = 540;
+
+  const dots = React.useMemo(() => {
+    let s = 71;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const out = [];
+    const N = 300;
+    for (let i = 0; i < N; i++) {
+      const a = rnd() * Math.PI * 2;
+      const r = Math.sqrt(rnd()) * 360;
+      out.push({
+        x: cx + Math.cos(a) * r,
+        y: cy + Math.sin(a) * r,
+        r: 2 + rnd() * 5,
+        d: rnd() * 1.5,
+        kind: rnd() < 0.7 ? 'coccus' : 'bacillus',
+        ax: rnd() * Math.PI * 2,
+        speed: 0.2 + rnd() * 0.4,
+        amp: 4 + rnd() * 10,
+      });
+    }
+    return out;
+  }, []);
+
+  return (
+    <>
+      {dots.map((d, i) => {
+        const t = Easing.easeOutCubic(clamp((localTime - d.d) / 1.0, 0, 1));
+        const wobx = Math.cos(d.ax + localTime * d.speed) * d.amp;
+        const woby = Math.sin(d.ax + localTime * d.speed * 1.3) * d.amp;
+        const fade = clamp((localTime - duration + 1.0) / 1.0, 0, 1);
+        return (
+          <Microbe
+            key={i}
+            x={d.x + wobx} y={d.y + woby} r={d.r * t}
+            kind={d.kind}
+            rot={(d.ax * 180 / Math.PI) + localTime * 20}
+            opacity={t * 0.7 * (1 - fade)}
+            fill={i % 6 === 0 ? GUT_ACC : GUT_INK}
+          />
+        );
+      })}
+
+      <GLocalSprite start={0.4} end={duration - 0.2}>
+        <TextSprite
+          text="DIVERSITY"
+          x={cx} y={cy - 80}
+          size={200} weight={700}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="-0.03em"
+          align="center"
+          entryDur={0.7} exitDur={0.4}
+        />
+      </GLocalSprite>
+      <GLocalSprite start={0.85} end={duration - 0.2}>
+        <TextSprite
+          text="is health."
+          x={cx} y={cy + 110}
+          size={56} weight={300}
+          color={GUT_ACC} font={GHELV}
+          letterSpacing="-0.01em"
+          align="center"
+          entryDur={0.6} exitDur={0.4}
+        />
+      </GLocalSprite>
+
+      <GLocalSprite start={2.4} end={duration - 0.2}>
+        <TextSprite
+          text="FIBER · FERMENTED FOODS · TIME OUTDOORS · SLEEP"
+          x={cx} y={cy + 230}
+          size={13} weight={400}
+          color={GUT_DIM} font={GHELV}
+          letterSpacing="0.45em"
+          align="center"
+          entryDur={0.5} exitDur={0.4}
+        />
+      </GLocalSprite>
+
+      <GLocalSprite start={duration - 1.6} end={duration}>
+        <TextSprite
+          text="— FIN —"
+          x={cx} y={cy + 360}
+          size={22} weight={400}
+          color={GUT_INK} font={GHELV}
+          letterSpacing="0.5em"
+          align="center"
+          entryDur={0.4} exitDur={0.5}
+        />
+      </GLocalSprite>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Scene registry
+// ─────────────────────────────────────────────────────────────────────────
+const GUT_SCENES = [
+  { title: 'TITLE',         dur: 5.5, component: GScene01_Title },
+  { title: '38 TRILLION',   dur: 6.5, component: GScene02_Count },
+  { title: 'RATIO 1.3 : 1', dur: 7.0, component: GScene03_Ratio },
+  { title: 'SPECIES',       dur: 6.5, component: GScene04_Species },
+  { title: 'WEIGHT',        dur: 6.5, component: GScene05_Weight },
+  { title: 'LENGTH',        dur: 7.5, component: GScene06_Length },
+  { title: 'SURFACE AREA',  dur: 6.5, component: GScene07_Surface },
+  { title: 'SEROTONIN',     dur: 6.5, component: GScene08_Serotonin },
+  { title: 'GUT–BRAIN AXIS',dur: 7.0, component: GScene09_GutBrain },
+  { title: 'CLOSING',       dur: 7.0, component: GScene10_Closing },
+];
+
+// Compute start/end times for each scene
+function buildSceneSchedule(scenes) {
+  let t = 0;
+  return scenes.map((s) => {
+    const start = t;
+    const end = t + s.dur;
+    t = end;
+    return { ...s, start, end };
+  });
+}
+
+Object.assign(window, {
+  buildSceneSchedule,
+  GUT_SCENES,
+  GUT_BG, GUT_INK, GUT_ACC, GUT_SOFT, GUT_PALE, GUT_DIM, GUT_HAIR, GUT_FAINT,
+  GHELV,
+  GLocalSprite,
+  GutChrome, GutChromeForCurrentTime,
+  GScene01_Title, GScene02_Count, GScene03_Ratio, GScene04_Species,
+  GScene05_Weight, GScene06_Length, GScene07_Surface, GScene08_Serotonin,
+  GScene09_GutBrain, GScene10_Closing,
+});
+                                                                                                                                                                                                                                                                                                                                                                                                                     cosmic-scale-animation/project/scraps/sketch-2026-05-17T18-03-18-u0xird.napkin                      0000644 0000000 0000000 00000000166 15202402530 024415  0                                                                                                    ustar 00                                                                0000000 0000000                                                                                                                                                                        {
+  "version": 1,
+  "created": "2026-05-17T18:03:18.449Z",
+  "modified": "2026-05-17T18:03:18.449Z",
+  "objects": []
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
