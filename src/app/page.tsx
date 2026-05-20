@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DashboardCharts } from "~/components/dashboard-charts";
 import { HeroBackground } from "~/components/hero-background";
 import { LearnMoreSection } from "~/components/learn-more-section";
+import { MicrobiomeCarousel } from "~/components/microbiome-carousel";
 import {
   FadeUp,
   HeroEntrance,
@@ -12,7 +13,6 @@ import {
 import { ProfilesSection } from "~/components/profiles-section";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { GutImpactSelector } from "~/components/ui/gut-impact-selector";
 
 const steps = [
   {
@@ -153,45 +153,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* What is the gut microbiome */}
+      {/* What is the gut microbiome — arc carousel */}
       <section className="border-t border-border px-4 py-20">
-        <div className="mx-auto max-w-3xl">
-          <FadeUp className="mb-12 text-center">
-            <h2 className="mb-4 flex items-center justify-center gap-3 text-3xl font-black tracking-tight">
-              <LeafSvg className="h-7 w-7 text-primary" />
-              Why your gut microbiome matters
-            </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              Your gut is home to roughly{" "}
-              <span className="font-semibold text-foreground">
-                38 trillion microbial cells
-              </span>{" "}
-              — more than the total number of human cells in your body. This
-              community of bacteria, fungi, and viruses, collectively known as
-              the gut microbiome, has a profound influence on almost every
-              system that keeps you healthy.
-            </p>
-          </FadeUp>
-
-          <FadeUp delay={0.1}>
-            <GutImpactSelector />
-          </FadeUp>
-
-          <FadeUp
-            delay={0.15}
-            className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center"
-          >
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">
-                The bottom line:
-              </span>{" "}
-              gut health is not just about digestion. It is a master regulator
-              of immunity, mood, metabolism, and resilience. Understanding your
-              personal microbiome profile is one of the highest-leverage steps
-              you can take for whole-body health.
-            </p>
-          </FadeUp>
-        </div>
+        <FadeUp>
+          <MicrobiomeCarousel />
+        </FadeUp>
+        <FadeUp
+          delay={0.15}
+          className="mx-auto mt-10 max-w-3xl rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center"
+        >
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              The bottom line:
+            </span>{" "}
+            gut health is not just about digestion. It is a master regulator of
+            immunity, mood, metabolism, and resilience. Understanding your
+            personal microbiome profile is one of the highest-leverage steps you
+            can take for whole-body health.
+          </p>
+        </FadeUp>
       </section>
 
       {/* Dashboard charts */}
