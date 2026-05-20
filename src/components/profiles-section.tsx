@@ -185,7 +185,7 @@ export function ProfilesSection() {
           <h2
             className="mt-4 mb-3 text-[clamp(40px,6.4vw,80px)] leading-[1.02] tracking-[-0.015em]"
             style={{
-              fontFamily: "var(--font-instrument-serif), Georgia, serif",
+              fontFamily: "var(--font-tempting), serif",
               fontWeight: 400,
               color: "#1a1d1a",
             }}
@@ -195,7 +195,7 @@ export function ProfilesSection() {
               style={{
                 fontStyle: "italic",
                 color: "#2f4a2c",
-                fontFamily: "var(--font-instrument-serif), Georgia, serif",
+                fontFamily: "var(--font-tempting), serif",
               }}
             >
               sixteen profiles
@@ -293,7 +293,7 @@ export function ProfilesSection() {
                   <span
                     className="text-sm"
                     style={{
-                      fontFamily: "Georgia, serif",
+                      fontFamily: "var(--font-tempting), serif",
                       fontStyle: "italic",
                       color: "#8a8c80",
                     }}
@@ -306,7 +306,7 @@ export function ProfilesSection() {
                 <h3
                   className="mb-3 text-[30px] leading-[1.05] tracking-[-0.005em]"
                   style={{
-                    fontFamily: "var(--font-instrument-serif), Georgia, serif",
+                    fontFamily: "var(--font-tempting), serif",
                     fontWeight: 400,
                     color: "#1a1d1a",
                   }}
@@ -314,7 +314,7 @@ export function ProfilesSection() {
                   <span
                     className="mb-0.5 block text-sm not-italic"
                     style={{
-                      fontFamily: "Georgia, serif",
+                      fontFamily: "var(--font-tempting), serif",
                       fontStyle: "italic",
                       fontSize: 14,
                       color: "#6b6e64",
@@ -410,7 +410,7 @@ export function ProfilesSection() {
           <p
             className="mt-3.5 text-[15px]"
             style={{
-              fontFamily: "Georgia, serif",
+              fontFamily: "var(--font-tempting), serif",
               fontStyle: "italic",
               color: "#6b6e64",
             }}

@@ -239,8 +239,7 @@ export function MicrobiomeCarousel() {
           padding: "48px 28px 64px",
           maxWidth: 1320,
           margin: "0 auto",
-          fontFamily:
-            "var(--font-dm-sans, var(--font-nunito), system-ui, sans-serif)",
+          fontFamily: "var(--font-inter), system-ui, sans-serif",
           WebkitFontSmoothing: "antialiased",
           overflowX: "hidden",
         }}
@@ -280,7 +279,7 @@ export function MicrobiomeCarousel() {
           </span>
           <span
             style={{
-              fontFamily: "var(--font-instrument-serif, serif)",
+              fontFamily: "var(--font-tempting), serif",
               fontStyle: "italic",
               fontSize: 16,
               color: "#2e3a2b",
@@ -379,7 +378,7 @@ export function MicrobiomeCarousel() {
                         </span>
                         <span
                           style={{
-                            fontFamily: "var(--font-dm-mono, monospace)",
+                            fontFamily: "ui-monospace, monospace",
                             fontSize: 10,
                             letterSpacing: "0.18em",
                             color: sys.ink,
@@ -392,7 +391,7 @@ export function MicrobiomeCarousel() {
                       <div>
                         <div
                           style={{
-                            fontFamily: "var(--font-instrument-serif, serif)",
+                            fontFamily: "var(--font-tempting), serif",
                             fontSize: 20,
                             lineHeight: 1.02,
                             color: sys.ink,
@@ -476,7 +475,7 @@ export function MicrobiomeCarousel() {
                 background: "#f6f8ec",
                 border: "1px solid #c2caac",
                 color: "#2e3a2b",
-                fontFamily: "var(--font-dm-mono, monospace)",
+                fontFamily: "ui-monospace, monospace",
                 fontSize: 11.5,
                 fontWeight: 500,
                 letterSpacing: "0.06em",
@@ -502,7 +501,7 @@ export function MicrobiomeCarousel() {
             {/* Headline */}
             <h2
               style={{
-                fontFamily: "var(--font-instrument-serif, serif)",
+                fontFamily: "var(--font-tempting), serif",
                 fontWeight: 400,
                 fontSize: "clamp(42px, 5.4vw, 72px)",
                 lineHeight: 1.02,
@@ -541,7 +540,7 @@ export function MicrobiomeCarousel() {
                 key={`stat-${tick}`}
                 className="mc-fade"
                 style={{
-                  fontFamily: "var(--font-instrument-serif, serif)",
+                  fontFamily: "var(--font-tempting), serif",
                   fontStyle: "italic",
                   fontSize: "clamp(44px, 4.6vw, 60px)",
                   lineHeight: 1,

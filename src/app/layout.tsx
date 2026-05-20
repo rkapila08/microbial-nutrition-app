@@ -1,27 +1,20 @@
 import type { Metadata } from "next";
-import { DM_Mono, DM_Sans, Instrument_Serif, Nunito } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import { Navbar } from "~/components/navbar";
 import { ThemeProvider } from "./theme-provider";
 import "./globals.css";
 
-const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-tempting",
+  weight: ["400", "700"],
   style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-instrument-serif",
-  display: "swap",
-});
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-const dmMono = DM_Mono({
-  subsets: ["latin"],
-  variable: "--font-dm-mono",
-  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -38,9 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${nunito.className} ${instrumentSerif.variable} ${dmSans.variable} ${dmMono.variable}`}
-      >
+      <body className={`${inter.variable} ${playfair.variable}`}>
         <ThemeProvider>
           <Navbar />
           {children}
