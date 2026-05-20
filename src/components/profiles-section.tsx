@@ -392,12 +392,7 @@ export function ProfilesSection() {
         <div className="mt-[72px] text-center">
           <Link
             href="/quiz"
-            className="inline-flex items-center gap-3 rounded-full border px-8 py-4 text-[15px] font-medium tracking-[-0.005em] transition-all duration-200 hover:-translate-y-px"
-            style={{
-              background: "#1a1d1a",
-              color: "#fdfbf6",
-              borderColor: "#1a1d1a",
-            }}
+            className="inline-flex items-center gap-3 rounded-full border border-primary bg-primary px-8 py-4 text-[15px] font-medium tracking-[-0.005em] text-primary-foreground transition-all duration-200 hover:-translate-y-px hover:opacity-90"
           >
             Find your type
             <span
