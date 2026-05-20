@@ -31,9 +31,9 @@ const SYSTEMS: System[] = [
     ts: "How your body fights and tolerates",
     mini: "70% of defence",
     iconPaths: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
-    c1: "#f2dce2", /* blush rose */
-    c2: "#e0a8b8", /* dusty pink */
-    c3: "#a0c0a0", /* sage green tail */
+    c1: "#f2dce2" /* blush rose */,
+    c2: "#e0a8b8" /* dusty pink */,
+    c3: "#a0c0a0" /* sage green tail */,
     ink: "#5c1e30",
   },
   {
@@ -50,9 +50,9 @@ const SYSTEMS: System[] = [
       "M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3 3 3 0 0 0 3-3V3z",
       "M15 3a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3 3 3 0 0 1-3-3",
     ],
-    c1: "#e8e0f4", /* lavender mist */
-    c2: "#c4ace0", /* soft lavender */
-    c3: "#8eac8c", /* sage green tail */
+    c1: "#e8e0f4" /* lavender mist */,
+    c2: "#c4ace0" /* soft lavender */,
+    c3: "#8eac8c" /* sage green tail */,
     ink: "#38245c",
   },
   {
@@ -66,9 +66,9 @@ const SYSTEMS: System[] = [
     ts: "How steady your fuel feels",
     mini: "10% daily fuel",
     iconPaths: ["M13 2 3 14h7l-1 8 10-12h-7l1-8z"],
-    c1: "#f8edcc", /* warm cream */
-    c2: "#ecd47c", /* sunflower gold */
-    c3: "#b0be6c", /* yellow-green tail */
+    c1: "#f8edcc" /* warm cream */,
+    c2: "#ecd47c" /* sunflower gold */,
+    c3: "#b0be6c" /* yellow-green tail */,
     ink: "#4c3c08",
   },
   {
@@ -85,9 +85,9 @@ const SYSTEMS: System[] = [
       "M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96a1 1 0 0 1 1.4 1.4C19.5 6 19 6.5 16.5 13 14.5 19 13 19.5 11 20Z",
       "M2 21c.6-3.6 2.5-7 6-9",
     ],
-    c1: "#cce4be", /* light leaf */
-    c2: "#a4ce8e", /* fresh green */
-    c3: "#70b058", /* vivid leaf */
+    c1: "#cce4be" /* light leaf */,
+    c2: "#a4ce8e" /* fresh green */,
+    c3: "#70b058" /* vivid leaf */,
     ink: "#1e4c14",
   },
   {
@@ -103,9 +103,9 @@ const SYSTEMS: System[] = [
     iconPaths: [
       "M19 14c1.5-2.5 1-6-1-8a6 6 0 0 0-9 0c-2 2-2.5 5.5-1 8 1 1.7 2 3 3 4 1 1 2 1.5 3 1.5s2-.5 3-1.5c1-1 2-2.3 2-4Z",
     ],
-    c1: "#f0d4dc", /* peony blush */
-    c2: "#d89cb4", /* deep rose */
-    c3: "#98ae88", /* sage green tail */
+    c1: "#f0d4dc" /* peony blush */,
+    c2: "#d89cb4" /* deep rose */,
+    c3: "#98ae88" /* sage green tail */,
     ink: "#5c1838",
   },
   {
@@ -121,9 +121,9 @@ const SYSTEMS: System[] = [
     iconPaths: [
       "M12 2 14.5 8.5 21 9l-5 4.5L17.5 21 12 17.5 6.5 21 8 13.5 3 9l6.5-.5L12 2Z",
     ],
-    c1: "#f8dfc8", /* peach blossom */
-    c2: "#ecba98", /* apricot */
-    c3: "#a8c098", /* fern green tail */
+    c1: "#f8dfc8" /* peach blossom */,
+    c2: "#ecba98" /* apricot */,
+    c3: "#a8c098" /* fern green tail */,
     ink: "#5c3018",
   },
   {
@@ -137,9 +137,9 @@ const SYSTEMS: System[] = [
     ts: "How well your body resets",
     mini: "2.4× deeper",
     iconPaths: ["M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"],
-    c1: "#dcd8f0", /* wisteria light */
-    c2: "#b4a0d8", /* wisteria */
-    c3: "#88b4a8", /* mint green tail */
+    c1: "#dcd8f0" /* wisteria light */,
+    c2: "#b4a0d8" /* wisteria */,
+    c3: "#88b4a8" /* mint green tail */,
     ink: "#2c1e54",
   },
 ];
