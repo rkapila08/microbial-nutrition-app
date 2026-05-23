@@ -10,6 +10,7 @@ import {
 import { saveDailyLog } from "~/app/actions/tracker";
 import { BadgeDisplay } from "~/components/badge-display";
 import { BadgeEarnToast } from "~/components/badge-earn-toast";
+import { JournalCharts } from "~/components/dashboard-charts";
 import { GutHealthScore } from "~/components/gut-health-score";
 import { MissionProgress } from "~/components/mission-progress";
 import { ShareCard } from "~/components/share-card";
@@ -1026,6 +1027,19 @@ function ResultsView({
               </div>
             );
           })}
+        </div>
+
+        {/* Adaptive charts */}
+        <div className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 font-black">
+            <LeafSvg className="h-4 w-4 text-primary" />
+            Your gut health snapshot
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Radar shows your axis profile vs. benchmarks. Bar chart shows how
+            your composite score evolved each day.
+          </p>
+          <JournalCharts axisScores={axisScores} trends={trends} />
         </div>
 
         {/* Recommendations */}

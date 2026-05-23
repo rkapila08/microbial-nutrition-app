@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardCharts } from "~/components/dashboard-charts";
 import { HeroBackground } from "~/components/hero-background";
 import { LearnMoreSection } from "~/components/learn-more-section";
 import { MicrobiomeCarousel } from "~/components/microbiome-carousel";
@@ -172,26 +171,6 @@ export default function Home() {
             can take for whole-body health.
           </p>
         </FadeUp>
-      </section>
-
-      {/* Dashboard charts */}
-      <section className="border-t border-border px-4 py-20">
-        <div className="mx-auto max-w-5xl">
-          <FadeUp className="mb-10 text-center">
-            <h2 className="mb-3 flex items-center justify-center gap-3 text-3xl font-black tracking-tight">
-              <LeafSvg className="h-7 w-7 text-primary" />
-              What your data looks like
-            </h2>
-            <p className="mx-auto max-w-xl text-muted-foreground">
-              See how your gut profile compares across key health axes — and how
-              it shifts over time.
-            </p>
-          </FadeUp>
-
-          <FadeUp delay={0.1}>
-            <DashboardCharts />
-          </FadeUp>
-        </div>
       </section>
 
       {/* Learn More — gut animation */}

@@ -13,29 +13,33 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { AxisKey } from "~/lib/quiz-data";
 
 const CHARCOAL = "#1f1f1f";
 const PURPLE = "#8B8FD4";
 const GRAY = "#C8C8C8";
 
-const radarData = [
-  { axis: "Diversity", you: 82, avg: 64, low: 40 },
-  { axis: "Fiber", you: 75, avg: 55, low: 30 },
-  { axis: "Resilience", you: 68, avg: 60, low: 45 },
-  { axis: "Inflammation", you: 55, avg: 50, low: 35 },
-  { axis: "Immunity", you: 88, avg: 62, low: 42 },
-  { axis: "Mood", you: 72, avg: 58, low: 38 },
-  { axis: "Metabolism", you: 65, avg: 52, low: 33 },
+const AVG_BENCHMARK = 62;
+const LOW_BENCHMARK = 35;
+
+const SHORT_AXIS_LABELS: Record<AxisKey, string> = {
+  diversity: "Diversity",
+  inflammation: "Inflammation",
+  resilience: "Resilience",
+  fiber: "Fiber",
+};
+
+const AXIS_ORDER: AxisKey[] = [
+  "diversity",
+  "inflammation",
+  "resilience",
+  "fiber",
 ];
 
-const barData = [
-  { month: "Jan", you: 71, avg: 60, low: 38 },
-  { month: "Feb", you: 74, avg: 61, low: 39 },
-  { month: "Mar", you: 78, avg: 63, low: 40 },
-  { month: "Apr", you: 75, avg: 62, low: 37 },
-  { month: "May", you: 80, avg: 65, low: 41 },
-  { month: "Jun", you: 82, avg: 64, low: 40 },
-];
+interface JournalChartsProps {
+  axisScores: Record<AxisKey, { score: number; max: number }>;
+  trends: Record<AxisKey, number[]>;
+}
 
 function RadarLabel({
   x,
@@ -61,19 +65,44 @@ function RadarLabel({
   );
 }
 
-export function DashboardCharts() {
+export function JournalCharts({ axisScores, trends }: JournalChartsProps) {
+  const radarData = AXIS_ORDER.map((key) => {
+    const { score, max } = axisScores[key];
+    const pct = max > 0 ? Math.round((score / max) * 100) : 50;
+    return {
+      axis: SHORT_AXIS_LABELS[key],
+      you: pct,
+      avg: AVG_BENCHMARK,
+      low: LOW_BENCHMARK,
+    };
+  });
+
+  const numDays = Math.max(...AXIS_ORDER.map((k) => trends[k].length), 0);
+  const barData = Array.from({ length: numDays }, (_, i) => {
+    const dayScores = AXIS_ORDER.map((k) => trends[k][i] ?? 0);
+    const composite = Math.round(
+      (dayScores.reduce((a, b) => a + b, 0) / dayScores.length) * 100,
+    );
+    return {
+      day: `Day ${i + 1}`,
+      you: composite,
+      avg: AVG_BENCHMARK,
+      low: LOW_BENCHMARK,
+    };
+  });
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Radar chart */}
-      <div className="rounded-2xl bg-white p-6 dark:bg-card">
+      <div className="rounded-2xl border border-border bg-card p-6">
         <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Gut Health Axes
         </p>
         <p className="mb-4 text-sm text-muted-foreground">
           Your profile vs. average vs. low-diversity baseline
         </p>
-        <ResponsiveContainer width="100%" height={300}>
-          <RadarChart data={radarData} outerRadius={100}>
+        <ResponsiveContainer width="100%" height={280}>
+          <RadarChart data={radarData} outerRadius={95}>
             <PolarGrid stroke="#e5e5e5" strokeWidth={1} gridType="circle" />
             <PolarAngleAxis
               dataKey="axis"
@@ -111,6 +140,7 @@ export function DashboardCharts() {
                 borderRadius: 10,
                 fontSize: 12,
               }}
+              formatter={(value) => [`${value}%`, undefined]}
             />
           </RadarChart>
         </ResponsiveContainer>
@@ -131,24 +161,24 @@ export function DashboardCharts() {
         </div>
       </div>
 
-      {/* Bar chart */}
-      <div className="rounded-2xl p-6">
+      {/* Bar chart — day-by-day composite */}
+      <div className="rounded-2xl border border-border bg-card p-6">
         <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Monthly Trend
+          7-Day Trend
         </p>
         <p className="mb-4 text-sm text-muted-foreground">
-          Overall gut score compared across groups
+          Composite gut score per day vs. benchmarks
         </p>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={280}>
           <BarChart data={barData} barCategoryGap="30%" barGap={3}>
             <CartesianGrid vertical={false} stroke="#e5e5e5" strokeWidth={1} />
             <XAxis
-              dataKey="month"
+              dataKey="day"
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 11, fill: "#9ca3af" }}
             />
-            <YAxis hide />
+            <YAxis hide domain={[0, 100]} />
             <Tooltip
               cursor={{ fill: "rgba(0,0,0,0.03)" }}
               contentStyle={{
@@ -157,6 +187,7 @@ export function DashboardCharts() {
                 borderRadius: 10,
                 fontSize: 12,
               }}
+              formatter={(value) => [`${value}%`, undefined]}
             />
             <Bar
               dataKey="low"
