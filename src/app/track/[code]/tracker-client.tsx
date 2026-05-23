@@ -279,6 +279,8 @@ export function TrackerClient({ session, initialLogs }: Props) {
   // ── Insight (post check-in) ───────────────────────────────────────────────
   if (phase === "insight" && todayDayScores && todayInsight) {
     const isJournalComplete = logs.length >= TOTAL_DAYS;
+    const insightAxisScores = getLongitudinalAxisScores(logs);
+    const insightTrends = getDailyTrends(logs);
     return (
       <>
         {gamification && gamification.newBadges.length > 0 && (
@@ -292,6 +294,8 @@ export function TrackerClient({ session, initialLogs }: Props) {
           todayScores={todayDayScores}
           insight={todayInsight}
           gamification={gamification}
+          axisScores={insightAxisScores}
+          trends={insightTrends}
           onContinue={() =>
             setPhase(isJournalComplete ? "results" : "overview")
           }
@@ -705,6 +709,8 @@ interface InsightViewProps {
   todayScores: Record<AxisKey, number>;
   insight: DailyInsight;
   gamification: GamificationResult | null;
+  axisScores: Record<AxisKey, { score: number; max: number }>;
+  trends: Record<AxisKey, number[]>;
   onContinue: () => void;
 }
 
@@ -713,6 +719,8 @@ function InsightView({
   todayScores,
   insight,
   gamification,
+  axisScores,
+  trends,
   onContinue,
 }: InsightViewProps) {
   const isAnon = gamification && !gamification.isAuthenticated;
@@ -819,6 +827,15 @@ function InsightView({
               );
             })}
           </div>
+        </div>
+
+        {/* Adaptive gut health charts */}
+        <div className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+            <LeafSvg className="h-4 w-4 text-primary" />
+            Running snapshot · Day {dayNumber}
+          </h2>
+          <JournalCharts axisScores={axisScores} trends={trends} />
         </div>
 
         {/* Anonymous teaser */}
