@@ -11,7 +11,6 @@ import { saveDailyLog } from "~/app/actions/tracker";
 import { BadgeDisplay } from "~/components/badge-display";
 import { BadgeEarnToast } from "~/components/badge-earn-toast";
 import { GutHealthScore } from "~/components/gut-health-score";
-import { JournalCharts } from "~/components/journal-charts";
 import { MissionProgress } from "~/components/mission-progress";
 import { ShareCard } from "~/components/share-card";
 import { StreakCounter } from "~/components/streak-counter";
@@ -1028,9 +1027,6 @@ function ResultsView({
             );
           })}
         </div>
-
-        {/* Charts: adaptive radar + 7-day trend */}
-        <JournalCharts trends={trends} />
 
         {/* Recommendations */}
         <div className="flex flex-col gap-4">
